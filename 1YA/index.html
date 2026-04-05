@@ -1,1 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">To The One My Heart Always Chooses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ivory:   #FAF6F0;
+      --blush:   #EDD5C5;
+      --rose:    #C4907A;
+      --wine:    #2C1810;
+      --gold:    #B8955A;
+      --gold-lt: rgba(184,149,90,0.3);
+      --sage:    #8A9E8A;
+      --dark:    #1A1210;
+    }
 
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { font-size: 16px; }
+
+    html {
+      background: var(--dark);
+    }
+
+    body {
+      background: var(--dark);
+      font-family: 'Jost', sans-serif;
+      color: var(--wine);
+      overflow: hidden;
+      width: 1024px;
+      margin: 0 auto;
+    }
+
+    /* ─────────────── LOCKSCREEN ─────────────── */
+    #lockscreen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1s ease, visibility 1s ease;
+    }
+    #lockscreen.unlocked {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #lock-bg {
+      position: absolute;
+      inset: -20px;
+      background: url('./images/lockscreen.jpg') center/cover no-repeat;
+      filter: blur(10px) brightness(0.45) saturate(0.8);
+      transform: scale(1.08);
+      transition: filter 1.2s ease;
+    }
+    #lockscreen.unlocked #lock-bg {
+      filter: blur(0px) brightness(1) saturate(1);
+    }
+
+    #lock-card {
+      position: relative;
+      z-index: 1;
+      background: rgba(250, 246, 240, 0.08);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: clamp(40px, 6vw, 70px) clamp(32px, 5vw, 60px);
+      text-align: center;
+      width: min(420px, 90vw);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+
+    .lock-ornament {
+      color: var(--gold);
+      font-size: 0.85rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      font-family: 'Jost', sans-serif;
+      font-weight: 200;
+      margin-bottom: 28px;
+      opacity: 0.85;
+    }
+
+    #lock-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+      color: #FAF6F0;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    #lock-emoji {
+      font-size: 1.4rem;
+      display: block;
+      margin-bottom: 40px;
+      letter-spacing: 0.15em;
+    }
+
+    .lock-label {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(250,246,240,0.4);
+      margin-bottom: 12px;
+    }
+
+    #password-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(184,149,90,0.4);
+      padding: 12px 6px;
+      font-family: 'Jost', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.6em;
+      color: #FAF6F0;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.3s;
+      -webkit-text-security: disc;
+    }
+    #password-input::placeholder {
+      letter-spacing: 0.2em;
+      font-size: 0.9rem;
+      opacity: 0.35;
+    }
+    #password-input:focus {
+      border-bottom-color: var(--gold);
+    }
+
+    #lock-btn {
+      margin-top: 32px;
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(184,149,90,0.45);
+      color: var(--gold);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.72rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      padding: 16px;
+      cursor: pointer;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    #lock-btn:hover {
+      background: rgba(184,149,90,0.15);
+      border-color: var(--gold);
+    }
+
+    #lock-error {
+      margin-top: 16px;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      color: #E8A090;
+      min-height: 20px;
+      transition: opacity 0.3s;
+    }
+
+    @keyframes shake {
+      0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)}
+    }
+    .shake { animation: shake 0.4s ease; }
+
+    /* ─────────────── MAIN CONTENT ─────────────── */
+    #main {
+      display: none;
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+    #main.visible { display: block; }
+
+    body.unlocked { overflow: hidden; }
+
+    /* ─────────────── SECTIONS ─────────────── */
+    .section {
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* ── HERO SECTION ── */
+    #hero {
+      align-items: flex-end;
+      justify-content: flex-start;
+    }
+    #hero-bg {
+      position: absolute;
+      inset: 0;
+      background: url('./images/lockscreen.jpg') center/cover no-repeat;
+      transform: scale(1.04);
+      transition: transform 8s ease-out;
+    }
+    #hero.active #hero-bg { transform: scale(1); }
+    #hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(20,10,6,0.82) 0%,
+        rgba(20,10,6,0.3) 40%,
+        rgba(20,10,6,0.1) 100%
+      );
+    }
+    #hero-content {
+      position: relative;
+      z-index: 1;
+      padding: clamp(40px, 6vw, 80px);
+      max-width: 700px;
+    }
+    .hero-eyebrow {
+      font-family: 'Jost', sans-serif;
+      font-weight: 200;
+      font-size: 0.72rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      text-shadow: 0 1px 14px rgba(0,0,0,0.7);
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1s 0.3s, transform 1s 0.3s;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      color: #FAF6F0;
+      line-height: 1.1;
+      margin-bottom: 18px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 1.1s 0.5s, transform 1.1s 0.5s;
+    }
+    .hero-emoji {
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      display: block;
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1s 0.7s, transform 1s 0.7s;
+      letter-spacing: 0.2em;
+    }
+    .hero-date {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.78rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(250,246,240,0.5);
+      opacity: 0;
+      transition: opacity 1s 0.9s;
+    }
+    #hero.active .hero-eyebrow,
+    #hero.active .hero-title,
+    #hero.active .hero-emoji,
+    #hero.active .hero-date {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── SPLIT SECTIONS ── */
+    .split {
+      flex-direction: row;
+    }
+    .split.reverse { flex-direction: row-reverse; }
+
+    .text-side {
+      flex: 0 0 42%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(40px, 5vw, 80px) clamp(36px, 4vw, 60px);
+      background: var(--ivory);
+      position: relative;
+      z-index: 1;
+    }
+    .text-side::after {
+      content: '';
+      position: absolute;
+      top: 10%;
+      bottom: 10%;
+      right: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, var(--gold-lt), transparent);
+    }
+    .split.reverse .text-side::after {
+      right: auto;
+      left: 0;
+    }
+
+    .photo-side {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Text side content */
+    .section-label {
+      font-family: 'Jost', sans-serif;
+      font-weight: 200;
+      font-size: 0.68rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+    .section-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(2rem, 3.2vw, 3rem);
+      color: var(--wine);
+      line-height: 1.2;
+      margin-bottom: 24px;
+    }
+    .section-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+      margin-bottom: 24px;
+    }
+    .section-body {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: clamp(0.85rem, 1.1vw, 0.96rem);
+      line-height: 1.85;
+      color: rgba(44, 24, 16, 0.75);
+      max-width: 380px;
+    }
+    .section-body em {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.15em;
+      color: var(--wine);
+    }
+
+    /* ── PHOTO LAYOUTS ── */
+
+    /* Single full photo */
+    .photo-full {
+      width: 100%;
+      height: auto;
+      display: block;
+      position: relative;
+      top: 0%;
+      transition: transform 6s ease;
+    }
+    .section:hover .photo-full { transform: scale(1.03); }
+
+    /* 3-photo collage: proposal */
+    .collage-proposal {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: 58% 42%;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      background: var(--dark);
+    }
+    .collage-proposal .cp-main {
+      grid-column: 1 / -1;
+      overflow: hidden;
+    }
+    .collage-proposal .cp-sub {
+      overflow: hidden;
+    }
+    .collage-proposal img {
+      width: 100%;
+      height: auto;
+      display: block;
+      position: relative;
+      top: 0%;
+      transition: transform 6s ease;
+    }
+    .collage-proposal .cp-main img { top: 0; transform: translateY(-25%); }
+    .collage-proposal:hover img { transform: scale(1.04); }
+
+    /* 3-photo collage: dogs */
+    .collage-dogs {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 55% 45%;
+      gap: 3px;
+      background: var(--dark);
+    }
+    .collage-dogs .cd-family {
+      grid-column: 1 / -1;
+      overflow: hidden;
+    }
+    .collage-dogs .cd-sub { overflow: hidden; }
+    .collage-dogs img {
+      width: 100%;
+      height: auto;
+      display: block;
+      position: relative;
+      top: 0%;
+      transition: transform 6s ease;
+    }
+    .collage-dogs:hover img { transform: scale(1.04); }
+
+    /* ── INTERMISSION ── */
+    #intermission {
+      background: var(--wine);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: clamp(40px, 8vw, 100px);
+    }
+    .intermission-ornament {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem;
+      color: var(--gold);
+      opacity: 0.4;
+      margin-bottom: 40px;
+    }
+    .intermission-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(2rem, 4.5vw, 3.8rem);
+      color: var(--ivory);
+      line-height: 1.3;
+      max-width: 780px;
+      margin-bottom: 32px;
+    }
+    .intermission-body {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: clamp(0.88rem, 1.2vw, 1rem);
+      line-height: 1.9;
+      color: rgba(250,246,240,0.55);
+      max-width: 600px;
+      margin: 0 auto 48px;
+    }
+    .intermission-soon {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── ITALY TEASER ── */
+    #italy {
+      flex-direction: column;
+      position: relative;
+    }
+    .italy-photos {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .italy-photo {
+      overflow: hidden;
+      position: relative;
+    }
+    .italy-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: blur(5px) brightness(0.45) saturate(0.7);
+      transform: scale(1.06);
+    }
+    .italy-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(20, 10, 6, 0.35);
+    }
+    .italy-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+      z-index: 1;
+    }
+    .italy-eyebrow {
+      font-family: 'Jost', sans-serif;
+      font-weight: 200;
+      font-size: 0.7rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+    .italy-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(2.4rem, 5.5vw, 5rem);
+      color: #FAF6F0;
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+    .italy-divider {
+      width: 50px;
+      height: 1px;
+      background: var(--gold);
+      margin: 0 auto 28px;
+      opacity: 0.6;
+    }
+    .italy-caption {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: clamp(0.85rem, 1.4vw, 1.05rem);
+      line-height: 1.8;
+      color: rgba(250,246,240,0.6);
+      max-width: 560px;
+      margin-bottom: 32px;
+    }
+    .italy-hint {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(1.8rem, 3.5vw, 3rem);
+      color: #FAF6F0;
+      letter-spacing: 0.04em;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+
+    /* ── FADE-IN ANIMATIONS ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .fade-up:nth-child(2) { transition-delay: 0.12s; }
+    .fade-up:nth-child(3) { transition-delay: 0.22s; }
+    .fade-up:nth-child(4) { transition-delay: 0.32s; }
+    .fade-up:nth-child(5) { transition-delay: 0.42s; }
+
+    /* ── NAV DOTS ── */
+    #nav-dots {
+      position: fixed;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    #nav-dots.visible { display: flex; }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(250,246,240,0.3);
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .dot.active {
+      background: var(--gold);
+      transform: scale(1.4);
+    }
+
+    /* ─── SCROLL INDICATOR ─── */
+    .scroll-cue {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.55;
+    }
+    .scroll-cue span {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--ivory);
+    }
+    .scroll-arrow {
+      width: 1px;
+      height: 32px;
+      background: linear-gradient(to bottom, transparent, var(--ivory));
+      animation: scrollPulse 1.6s infinite;
+    }
+    @keyframes scrollPulse {
+      0%,100% { opacity: 0; transform: scaleY(0.5); }
+      50% { opacity: 1; transform: scaleY(1); }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      body { overflow: auto; width: 100%; margin: 0; }
+      body.unlocked { overflow: auto; }
+
+      #main {
+        height: auto;
+        overflow-y: auto;
+        scroll-snap-type: none;
+      }
+
+      /* Sections flow naturally — no fixed height except hero */
+      .section {
+        height: auto;
+        min-height: 0;
+        scroll-snap-align: none;
+        flex-direction: column !important;
+      }
+      #hero { height: 100svh; min-height: 100svh; }
+      #intermission { min-height: 100svh; }
+
+      .text-side {
+        flex: none;
+        width: 100%;
+        padding: 48px 28px;
+      }
+      .text-side::after { display: none; }
+
+      /* Photo containers grow to fit content */
+      .photo-side {
+        flex: none;
+        width: 100%;
+        height: auto;
+      }
+
+      /* ── Proposal & Dogs: flex column, all photos stack full-width ── */
+      .collage-proposal,
+      .collage-dogs {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        gap: 3px;
+      }
+
+      .collage-proposal .cp-main,
+      .collage-proposal .cp-sub,
+      .collage-dogs .cd-family,
+      .collage-dogs .cd-sub {
+        width: 100%;
+        overflow: hidden;
+      }
+
+      /* All collage images: full width, natural height, no transforms */
+      .collage-proposal img,
+      .collage-dogs img {
+        width: 100% !important;
+        height: auto !important;
+        position: static !important;
+        transform: none !important;
+        top: auto !important;
+        object-fit: unset !important;
+      }
+
+      /* Wedding portrait */
+      .photo-full {
+        width: 100% !important;
+        height: auto !important;
+        position: static !important;
+        transform: none !important;
+        top: auto !important;
+      }
+
+      /* ── Italy: full-height with both photos as a vertical strip ── */
+      #italy {
+        height: auto;
+        flex-direction: column;
+      }
+      .italy-photos {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        height: auto;
+      }
+      .italy-photo {
+        position: relative;
+        width: 100%;
+        height: auto;
+        overflow: hidden;
+      }
+      .italy-photo img {
+        width: 100%;
+        height: auto;
+        display: block;
+        filter: blur(4px) brightness(0.45) saturate(0.7);
+        transform: none;
+      }
+      .italy-photo:last-child { display: block; }
+      .italy-overlay { display: none; }
+
+      /* Caption sits below the photos as its own block */
+      .italy-content {
+        position: relative;
+        inset: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 32px;
+        background: var(--wine);
+        z-index: 1;
+      }
+      /* Ensure caption is always visible on mobile */
+      #italy .italy-hint {
+        opacity: 1 !important;
+        transform: none !important;
+        font-size: clamp(1.4rem, 6vw, 2rem);
+        color: var(--gold);
+      }
+
+      #nav-dots { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ LOCK SCREEN ═══════════════ -->
+  <div id="lockscreen">
+    <div id="lock-bg"></div>
+    <div id="lock-card">
+      <p class="lock-ornament">✦ &nbsp; &nbsp; ✦ &nbsp; &nbsp; ✦</p>
+      <h1 id="lock-title">To The One My Heart Always Chooses</h1>
+      <span id="lock-emoji">💍 🌸 ✨</span>
+      <p class="lock-label">The day two become one</p>
+      <input
+        type="password"
+        id="password-input"
+        placeholder="••••••"
+        maxlength="6"
+        autocomplete="off"
+        inputmode="numeric"
+      >
+      <button id="lock-btn" onclick="tryUnlock()">Open ✦</button>
+      <p id="lock-error"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════ NAV DOTS ═══════════════ -->
+  <nav id="nav-dots" aria-label="Section navigation">
+    <div class="dot active" onclick="scrollToSection(0)" title="Welcome"></div>
+    <div class="dot" onclick="scrollToSection(1)" title="The Proposal"></div>
+    <div class="dot" onclick="scrollToSection(2)" title="Our Wedding"></div>
+    <div class="dot" onclick="scrollToSection(3)" title="Our Babies"></div>
+    <div class="dot" onclick="scrollToSection(4)" title="Reflection"></div>
+    <div class="dot" onclick="scrollToSection(5)" title="Soon..."></div>
+  </nav>
+
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <div id="main">
+
+    <!-- ── 0. HERO ── -->
+    <section class="section" id="hero">
+      <div id="hero-bg"></div>
+      <div id="hero-overlay"></div>
+      <div id="hero-content">
+        <p class="hero-eyebrow fade-up">Lea &amp; Johnny &nbsp;·&nbsp; One Year Together</p>
+        <h2 class="hero-title fade-up">Happy One Year<br>Anniversary!!!</h2>
+        <span class="hero-emoji fade-up">🥂 💍 🎉 ✨</span>
+        <p class="hero-date fade-up" id="anniversary-date">April 7, 2025 → Forever</p>
+      </div>
+      <div class="scroll-cue">
+        <span>Scroll</span>
+        <div class="scroll-arrow"></div>
+      </div>
+    </section>
+
+    <!-- ── 1. PROPOSAL ── -->
+    <section class="section split" id="proposal">
+      <div class="text-side">
+        <p class="section-label fade-up">Chapter One</p>
+        <h2 class="section-heading fade-up" id="proposal-heading">
+          It All Started<br><em>Here.</em>
+        </h2>
+        <div class="section-divider fade-up"></div>
+        <p class="section-body fade-up" id="proposal-body">
+          Loading...
+        </p>
+      </div>
+      <div class="photo-side">
+        <div class="collage-proposal">
+          <div class="cp-main">
+            <img src="./images/proposal-hilltop.jpg" alt="The proposal on Catalina Island">
+          </div>
+          <div class="cp-sub">
+            <img src="./images/proposal-ring.jpg" alt="Just engaged">
+          </div>
+          <div class="cp-sub">
+            <img src="./images/proposal-room.jpg" alt="A special surprise">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 2. WEDDING ── -->
+    <section class="section split reverse" id="wedding">
+      <div class="text-side">
+        <p class="section-label fade-up">Chapter Two</p>
+        <h2 class="section-heading fade-up">April 7th,<br><em>2025.</em></h2>
+        <div class="section-divider fade-up"></div>
+        <p class="section-body fade-up">
+          We made it official at the beautiful courthouse in Pasadena.
+          You walked toward me and I forgot how to breathe. We chose each other.
+          We exchanged our vows, slipped on our rings, and sealed the rest of our
+          lives together with a kiss.
+          <br><br>
+          That day, you became my wife and I became the luckiest man alive.
+          <br><br>
+          <em>Happy one year, Lea.</em>
+        </p>
+      </div>
+      <div class="photo-side">
+        <img class="photo-full" src="./images/wedding-portrait.jpg" alt="Our wedding day">
+      </div>
+    </section>
+
+    <!-- ── 3. DOGS ── -->
+    <section class="section split" id="dogs">
+      <div class="text-side">
+        <p class="section-label fade-up">Chapter Three</p>
+        <h2 class="section-heading fade-up">Our Babies<br><em>Were There Too.</em></h2>
+        <div class="section-divider fade-up"></div>
+        <p class="section-body fade-up">
+          Because what kind of celebration would it be without Chewie and Gucci?
+          The babies were absolutely filled with joy and excitement that day.
+          They may not have known the words for it, but mom and dad were getting married,
+          and somehow they felt every single bit of it.
+          <br><br>
+          They are not just our dogs. They are our family. The first two members of
+          this little life we are building together, and somehow they make every big
+          moment even bigger.
+          <br><br>
+          <em>We would not have it any other way.</em>
+        </p>
+      </div>
+      <div class="photo-side">
+        <div class="collage-dogs">
+          <div class="cd-family">
+            <img src="./images/family.jpg" alt="All of us together">
+          </div>
+          <div class="cd-sub">
+            <img src="./images/chewie.jpg" alt="Chewie">
+          </div>
+          <div class="cd-sub">
+            <img src="./images/gucci.jpg" alt="Gucci">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 4. INTERMISSION ── -->
+    <section class="section" id="intermission">
+      <div class="intermission-ornament">✦</div>
+      <h2 class="intermission-heading fade-up">
+        One year.<br>A thousand moments.<br>
+        <em>A lifetime still ahead.</em>
+      </h2>
+      <p class="intermission-body fade-up">
+        It has been one incredible year, Lea. Between everything we have navigated,
+        every late night, every big decision, every quiet Sunday morning, we have
+        been building something real. Something worth protecting. We have grown
+        together, chosen each other over and over again, and created a life I am
+        genuinely so proud of.
+        <br><br>
+        Every moment, every chapter, every ordinary Tuesday. I would choose all of it
+        again. I would choose <em>you</em> again.
+      </p>
+      <p class="intermission-soon fade-up">And soon... ✨</p>
+    </section>
+
+    <!-- ── 5. ITALY TEASER ── -->
+    <section class="section" id="italy">
+      <div class="italy-photos">
+        <div class="italy-photo">
+          <img src="./images/villa.jpg" alt="">
+          <div class="italy-overlay"></div>
+        </div>
+        <div class="italy-photo">
+          <img src="./images/tuscany.jpg" alt="">
+          <div class="italy-overlay"></div>
+        </div>
+      </div>
+      <div class="italy-content">
+        <p class="italy-hint fade-up">The day we always dreamed of. 🌿</p>
+      </div>
+    </section>
+
+  </div><!-- /#main -->
+
+  <script>
+    // ─── PASSWORD ───
+    const PASSWORD = '040725';
+
+    function tryUnlock() {
+      const input = document.getElementById('password-input');
+      const error = document.getElementById('lock-error');
+      const card  = document.getElementById('lock-card');
+
+      if (input.value === PASSWORD) {
+        unlock();
+      } else {
+        error.textContent = "That\u2019s not quite right. Try again. \uD83D\uDC95";
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    function unlock() {
+      document.getElementById('lockscreen').classList.add('unlocked');
+      document.body.classList.add('unlocked');
+      const main = document.getElementById('main');
+      main.classList.add('visible');
+      document.getElementById('page-title').textContent = 'Happy One Year Anniversary!!! 🥂💍🎉✨';
+      document.getElementById('nav-dots').classList.add('visible');
+
+      // Trigger hero animations
+      setTimeout(() => {
+        document.getElementById('hero').classList.add('active');
+        initObservers();
+        initScrollTracking();
+      }, 400);
+    }
+
+    // Enter key support
+    document.getElementById('password-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') tryUnlock();
+    });
+
+    // ─── DATE DIFF ───
+    function buildProposalText() {
+      const engagement = new Date(2024, 7, 17); // Aug 17, 2024
+      const now = new Date();
+
+      let months = (now.getFullYear() - engagement.getFullYear()) * 12
+                 + (now.getMonth() - engagement.getMonth());
+      if (now.getDate() < engagement.getDate()) months--;
+
+      const heading = document.getElementById('proposal-heading');
+      heading.innerHTML = `${months} Months Ago,<br><em>Everything Changed.</em>`;
+
+      const body = document.getElementById('proposal-body');
+      body.innerHTML = `
+        On a sun-drenched afternoon overlooking the harbor of Catalina Island,
+        you said yes, and in that one single moment, my whole world changed.
+        <br><br>
+        I had been nervously carrying that ring for weeks, waiting for the right moment.
+        It turned out to be a wild adventure of an afternoon. And then there it was:
+        the sun raining gold on us, the harbor shimmering below, and you, more beautiful
+        than any view I had ever seen. I got down on one knee, and everything I had
+        ever wanted looked back at me.
+        <br><br>
+        <em>Of course you said yes. But I have never exhaled so hard in my life.</em>
+      `;
+    }
+
+    buildProposalText();
+
+    // ─── FADE-IN OBSERVER ───
+    function initObservers() {
+      const els = document.querySelectorAll('.fade-up');
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.15 });
+      els.forEach(el => obs.observe(el));
+    }
+
+    // ─── SCROLL / DOT TRACKING ───
+    const sections = ['hero','proposal','wedding','dogs','intermission','italy'];
+
+    function scrollToSection(idx) {
+      const el = document.getElementById(sections[idx]);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function initScrollTracking() {
+      const mainEl = document.getElementById('main');
+      const dots = document.querySelectorAll('.dot');
+
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting && e.intersectionRatio > 0.5) {
+            const idx = sections.indexOf(e.target.id);
+            if (idx >= 0) {
+              dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+            }
+          }
+        });
+      }, { root: mainEl, threshold: 0.5 });
+
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) obs.observe(el);
+      });
+    }
+  </script>
+</body>
+</html>
