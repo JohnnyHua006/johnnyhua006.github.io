@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Happy Mother's Day, Mom</title>
+<meta name="description" content="A Mother's Day card from Gucci and Chewie." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=Caveat:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f5ecd9;
+    --paper-deep: #ecdfc4;
+    --ink: #3a2a1a;
+    --ink-soft: #6b5340;
+    --gold: #b9863c;
+    --gold-deep: #8a5f1f;
+    --blush: #c96d5a;
+    --gucci: #8a3a2a;       /* warm rust for Gucci's letter */
+    --chewie: #2f5a4a;      /* deep green for Chewie's letter */
+    --shadow: 0 18px 40px -22px rgba(58, 42, 26, 0.45),
+              0 4px 10px -4px rgba(58, 42, 26, 0.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Paper grain + soft vignette */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(255, 240, 210, 0.6), transparent 60%),
+      radial-gradient(ellipse at 50% 100%, rgba(120, 80, 30, 0.08), transparent 70%);
+    z-index: 1;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.23 0 0 0 0 0.16 0 0 0 0 0.10 0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    z-index: 2;
+  }
+
+  .page {
+    position: relative;
+    z-index: 3;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 5rem;
+  }
+
+  /* Decorative paw prints scattered in the background */
+  .paw-bg {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .paw-bg svg { width: 100%; height: 100%; }
+  .paw-bg.p1 { top: 8%; left: 4%; transform: rotate(-22deg); }
+  .paw-bg.p2 { top: 22%; right: 6%; transform: rotate(15deg); width: 55px; height: 55px; }
+  .paw-bg.p3 { top: 60%; left: 3%; transform: rotate(28deg); width: 90px; height: 90px; }
+  .paw-bg.p4 { bottom: 8%; right: 4%; transform: rotate(-10deg); }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    position: relative;
+    animation: fadeUp 0.9s ease-out both;
+  }
+  .stamp {
+    display: inline-block;
+    font-family: 'Fraunces', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    border: 1.5px solid var(--gold-deep);
+    padding: 0.45rem 1.1rem 0.4rem;
+    border-radius: 999px;
+    margin-bottom: 1.75rem;
+    background: rgba(185, 134, 60, 0.05);
+  }
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(2.6rem, 7vw, 5.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--gold-deep);
+  }
+  .hero .from {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    color: var(--ink-soft);
+    margin-top: 1.25rem;
+  }
+  .hero .from .name { color: var(--gucci); font-weight: 600; }
+  .hero .from .name + .name { color: var(--chewie); }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2.5rem auto;
+    color: var(--gold-deep);
+  }
+  .divider .line {
+    width: 60px;
+    height: 1px;
+    background: var(--gold-deep);
+    opacity: 0.5;
+  }
+  .divider svg { width: 22px; height: 22px; }
+
+  /* LETTERS */
+  .letters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin: 2rem 0 4rem;
+  }
+
+  .letter {
+    background: var(--paper-deep);
+    padding: 2.5rem 2.25rem 2rem;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    position: relative;
+    font-family: 'Caveat', cursive;
+    font-size: 1.45rem;
+    line-height: 1.55;
+    animation: fadeUp 1s ease-out both;
+  }
+  .letter::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1px dashed rgba(58, 42, 26, 0.18);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .letter.gucci {
+    transform: rotate(-1.2deg);
+    color: var(--gucci);
+    animation-delay: 0.15s;
+  }
+  .letter.chewie {
+    transform: rotate(1deg);
+    color: var(--chewie);
+    animation-delay: 0.3s;
+  }
+
+  .letter h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: 1.15rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 1.25rem;
+    text-align: center;
+  }
+  .letter .salutation {
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .letter p { margin-bottom: 1rem; }
+  .letter .signoff {
+    margin-top: 1.5rem;
+    font-size: 1.3rem;
+    color: var(--ink-soft);
+  }
+  .letter .sig-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.25rem;
+  }
+  .letter .signature {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* Polaroid-style photo */
+  .polaroid {
+    flex-shrink: 0;
+    background: #fffaf0;
+    padding: 8px 8px 28px;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.15),
+      0 8px 18px -8px rgba(58, 42, 26, 0.4);
+    width: 110px;
+    position: relative;
+    transition: transform 0.4s ease;
+  }
+  .polaroid::after {
+    content: attr(data-caption);
+    position: absolute;
+    bottom: 6px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 1.05rem;
+    color: var(--ink);
+  }
+  .polaroid img,
+  .polaroid .placeholder {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: var(--paper);
+  }
+  .polaroid .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    text-align: center;
+    padding: 0.5rem;
+    line-height: 1.2;
+    background: linear-gradient(135deg, var(--paper) 0%, var(--paper-deep) 100%);
+  }
+  .polaroid.gucci-pic { transform: rotate(4deg); }
+  .polaroid.chewie-pic { transform: rotate(-5deg); }
+  .polaroid.gucci-pic:hover { transform: rotate(0) scale(1.05); }
+  .polaroid.chewie-pic:hover { transform: rotate(0) scale(1.05); }
+
+  /* Tape on the polaroid */
+  .polaroid::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 50px;
+    height: 18px;
+    background: rgba(201, 168, 100, 0.45);
+    border-left: 1px dashed rgba(0,0,0,0.05);
+    border-right: 1px dashed rgba(0,0,0,0.05);
+  }
+
+  /* Pin */
+  .pin {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 14px;
+    background: var(--gold-deep);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25), inset 0 -2px 3px rgba(0,0,0,0.2);
+    z-index: 4;
+  }
+
+  /* WET DOG KISS overlay */
+  .kiss-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+    animation: kissFade 0.7s ease-out 3.0s forwards;
+  }
+
+  /* Wet streak/smear that trails the tongue */
+  .wet-streak {
+    position: absolute;
+    top: 50%;
+    left: -10vw;
+    width: 120vw;
+    height: 18vh;
+    transform: translateY(-50%) rotate(-3deg);
+    background:
+      radial-gradient(ellipse 60% 90% at 30% 50%, rgba(195, 225, 245, 0.6), transparent 70%),
+      radial-gradient(ellipse 50% 80% at 60% 50%, rgba(170, 210, 240, 0.5), transparent 70%),
+      linear-gradient(90deg, transparent 0%, rgba(210, 232, 247, 0.35) 20%, rgba(180, 218, 243, 0.45) 50%, rgba(210, 232, 247, 0.35) 80%, transparent 100%);
+    filter: blur(8px);
+    opacity: 0;
+    mix-blend-mode: multiply;
+    animation: streakSwipe 1.8s ease-out 0.3s forwards;
+  }
+
+  .tongue {
+    position: absolute;
+    top: 50%;
+    left: -40vw;
+    width: 60vw;
+    height: auto;
+    transform: translateY(-50%) rotate(-8deg);
+    animation: tongueSwipe 1.6s cubic-bezier(0.5, 0, 0.5, 1) 0.2s forwards;
+    filter: drop-shadow(0 6px 14px rgba(201, 100, 130, 0.4));
+  }
+
+  .smooch {
+    position: absolute;
+    top: 38%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0) rotate(-12deg);
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(3rem, 10vw, 7rem);
+    color: var(--blush);
+    text-shadow:
+      2px 2px 0 var(--paper),
+      4px 4px 0 rgba(58, 42, 26, 0.15);
+    animation: smoochPop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s forwards;
+  }
+
+  /* Splash bursts: starburst splatter at impact points */
+  .splash {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    animation: splashBurst 1.2s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+    filter: drop-shadow(0 4px 8px rgba(60, 130, 180, 0.4));
+  }
+  .splash svg { width: 100%; height: 100%; }
+  .splash.s1 { top: 40%; left: 22%; animation-delay: 0.55s; }
+  .splash.s2 { top: 62%; left: 50%; animation-delay: 0.85s; width: 260px; height: 260px; }
+  .splash.s3 { top: 35%; left: 78%; animation-delay: 1.15s; width: 200px; height: 200px; }
+  .splash.s4 { top: 70%; left: 18%; animation-delay: 1.0s; width: 160px; height: 160px; }
+  .splash.s5 { top: 28%; left: 65%; animation-delay: 1.3s; width: 180px; height: 180px; }
+
+  /* Individual droplets */
+  .droplet {
+    position: absolute;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: radial-gradient(circle at 30% 30%, rgba(225, 242, 255, 0.95), rgba(120, 180, 220, 0.8) 60%, rgba(60, 130, 180, 0.65));
+    opacity: 0;
+    box-shadow: inset -2px -3px 4px rgba(40, 90, 140, 0.45), 0 2px 4px rgba(40, 90, 140, 0.3);
+    animation: dropletSplat 1s ease-out forwards;
+  }
+  .droplet.d1  { top: 28%; left: 18%; width: 24px; height: 30px; animation-delay: 0.7s; }
+  .droplet.d2  { top: 55%; left: 30%; width: 18px; height: 22px; animation-delay: 0.85s; }
+  .droplet.d3  { top: 45%; left: 68%; width: 30px; height: 36px; animation-delay: 1.0s; }
+  .droplet.d4  { top: 65%; left: 42%; width: 16px; height: 20px; animation-delay: 1.1s; }
+  .droplet.d5  { top: 35%; left: 55%; width: 22px; height: 28px; animation-delay: 1.2s; }
+  .droplet.d6  { top: 22%; left: 40%; width: 14px; height: 18px; animation-delay: 0.9s; }
+  .droplet.d7  { top: 75%; left: 75%; width: 20px; height: 26px; animation-delay: 1.3s; }
+  .droplet.d8  { top: 50%; left: 88%; width: 16px; height: 20px; animation-delay: 1.05s; }
+  .droplet.d9  { top: 18%; left: 72%; width: 12px; height: 14px; animation-delay: 1.15s; }
+  .droplet.d10 { top: 80%; left: 55%; width: 26px; height: 32px; animation-delay: 1.25s; }
+  .droplet.d11 { top: 38%; left: 8%;  width: 14px; height: 18px; animation-delay: 0.75s; }
+  .droplet.d12 { top: 68%; left: 92%; width: 18px; height: 22px; animation-delay: 1.4s; }
+
+  /* Drips that elongate downward */
+  .drip {
+    position: absolute;
+    width: 8px;
+    background: linear-gradient(180deg, rgba(200, 230, 250, 0.9), rgba(110, 170, 210, 0.75) 70%, rgba(60, 120, 170, 0.55));
+    border-radius: 50% 50% 50% 50% / 20% 20% 80% 80%;
+    transform-origin: top center;
+    transform: scaleY(0);
+    opacity: 0;
+    box-shadow: inset -1px 0 2px rgba(40, 90, 140, 0.45);
+    animation: dripDown 1.4s ease-in forwards;
+  }
+  .drip.dr1 { top: 38%; left: 30%; height: 60px; animation-delay: 1.1s; }
+  .drip.dr2 { top: 52%; left: 55%; height: 80px; animation-delay: 1.3s; width: 10px; }
+  .drip.dr3 { top: 32%; left: 72%; height: 50px; animation-delay: 1.4s; }
+  .drip.dr4 { top: 58%; left: 22%; height: 45px; animation-delay: 1.5s; width: 6px; }
+
+  @keyframes tongueSwipe {
+    0%   { left: -60vw; transform: translateY(-50%) rotate(-12deg); }
+    40%  { left: 20vw;  transform: translateY(-45%) rotate(-4deg); }
+    70%  { left: 60vw;  transform: translateY(-55%) rotate(6deg); }
+    100% { left: 110vw; transform: translateY(-50%) rotate(15deg); opacity: 0; }
+  }
+  @keyframes streakSwipe {
+    0%   { opacity: 0; transform: translateY(-50%) rotate(-3deg) scaleX(0.3); transform-origin: left center; }
+    30%  { opacity: 0.9; }
+    60%  { opacity: 0.7; transform: translateY(-50%) rotate(-3deg) scaleX(1); }
+    100% { opacity: 0; transform: translateY(-50%) rotate(-3deg) scaleX(1); }
+  }
+  @keyframes smoochPop {
+    0%   { transform: translate(-50%, -50%) scale(0) rotate(-12deg); opacity: 0; }
+    40%  { transform: translate(-50%, -50%) scale(1.15) rotate(-8deg); opacity: 1; }
+    70%  { transform: translate(-50%, -50%) scale(1) rotate(-10deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.9) rotate(-10deg); opacity: 0; }
+  }
+  @keyframes splashBurst {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(0); }
+    40%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(8deg); }
+    70%  { opacity: 0.9; transform: translate(-50%, -50%) scale(1) rotate(10deg); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05) rotate(15deg); }
+  }
+  @keyframes dropletSplat {
+    0%   { opacity: 0; transform: scale(0); }
+    30%  { opacity: 1; transform: scale(1.3); }
+    60%  { opacity: 0.95; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.85) translateY(12px); }
+  }
+  @keyframes dripDown {
+    0%   { opacity: 0; transform: scaleY(0); }
+    25%  { opacity: 0.9; transform: scaleY(0.4); }
+    60%  { opacity: 0.85; transform: scaleY(1); }
+    100% { opacity: 0; transform: scaleY(1.05) translateY(8px); }
+  }
+  @keyframes kissFade {
+    to { opacity: 0; visibility: hidden; }
+  }
+
+  /* LOVE LIST */
+  .love-list {
+    background: var(--paper-deep);
+    padding: 3rem 2.5rem;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    margin-bottom: 4rem;
+    position: relative;
+    animation: fadeUp 1s ease-out 0.4s both;
+  }
+  .love-list h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    text-align: center;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .love-list h2 em { color: var(--gold-deep); font-style: italic; font-weight: 500; }
+  .love-list .sub {
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem;
+    color: var(--ink-soft);
+    margin-bottom: 2rem;
+  }
+  .love-list ul {
+    list-style: none;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .love-list li {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    font-family: 'Caveat', cursive;
+    font-size: 1.45rem;
+    line-height: 1.4;
+  }
+  .love-list .who {
+    flex-shrink: 0;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    margin-top: 0.35rem;
+    white-space: nowrap;
+  }
+  .who.g { background: rgba(138, 58, 42, 0.12); color: var(--gucci); }
+  .who.c { background: rgba(47, 90, 74, 0.12); color: var(--chewie); }
+
+  /* FOOTER */
+  .closer {
+    text-align: center;
+    padding: 2rem 0 1rem;
+    animation: fadeUp 1s ease-out 0.6s both;
+  }
+  .closer .heart {
+    display: inline-block;
+    color: var(--blush);
+    font-size: 1.5rem;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .closer p {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    margin: 1rem 0 1.5rem;
+  }
+  .pawline {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  .pawline svg {
+    width: 28px;
+    height: 28px;
+    fill: var(--gold-deep);
+    opacity: 0.7;
+    transition: transform 0.25s ease;
+  }
+  .pawline svg:nth-child(odd) { transform: rotate(-15deg); }
+  .pawline svg:nth-child(even) { transform: rotate(12deg) translateY(4px); }
+  .pawline svg:hover { transform: scale(1.2) rotate(0); opacity: 1; }
+
+  .signed {
+    margin-top: 2rem;
+    font-family: 'Caveat', cursive;
+    font-size: 1.6rem;
+  }
+  .signed .g { color: var(--gucci); font-weight: 700; }
+  .signed .c { color: var(--chewie); font-weight: 700; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: none; }
+  }
+  .letter.gucci { animation-name: fadeUpLeft; }
+  .letter.chewie { animation-name: fadeUpRight; }
+  @keyframes fadeUpLeft {
+    from { opacity: 0; transform: translateY(20px) rotate(-1.2deg) translateX(-10px); }
+    to { opacity: 1; transform: translateY(0) rotate(-1.2deg); }
+  }
+  @keyframes fadeUpRight {
+    from { opacity: 0; transform: translateY(20px) rotate(1deg) translateX(10px); }
+    to { opacity: 1; transform: translateY(0) rotate(1deg); }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.18); }
+  }
+
+  /* MOBILE */
+  @media (max-width: 760px) {
+    .page { padding: 2rem 1rem 3rem; }
+    .letters { grid-template-columns: 1fr; gap: 2rem; }
+    .letter { padding: 2rem 1.5rem 1.5rem; font-size: 1.3rem; }
+    .letter.gucci, .letter.chewie { transform: rotate(0); }
+    .letter .sig-row { gap: 0.75rem; }
+    .polaroid { width: 90px; padding: 6px 6px 24px; }
+    .polaroid::after { font-size: 0.95rem; bottom: 5px; }
+    @keyframes fadeUpLeft {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fadeUpRight {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: none; }
+    }
+    .love-list { padding: 2rem 1.25rem; }
+    .love-list li { font-size: 1.25rem; flex-direction: column; gap: 0.4rem; }
+    .love-list .who { margin-top: 0; }
+    .paw-bg { display: none; }
+    .splash.s1, .splash.s2, .splash.s3, .splash.s4, .splash.s5 {
+      width: 140px; height: 140px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .kiss-overlay { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Wet dog kiss on page load -->
+<div class="kiss-overlay" aria-hidden="true">
+
+  <!-- Reusable splash shape, defined once and referenced via <use> -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <radialGradient id="wetGrad" cx="40%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#dceffd"/>
+        <stop offset="50%" stop-color="#7cb8e0"/>
+        <stop offset="100%" stop-color="#3a7eb0"/>
+      </radialGradient>
+      <symbol id="splashShape" viewBox="0 0 100 100">
+        <g fill="url(#wetGrad)">
+          <ellipse cx="50" cy="50" rx="14" ry="12"/>
+          <ellipse cx="22" cy="28" rx="6" ry="9" transform="rotate(-30 22 28)"/>
+          <ellipse cx="78" cy="22" rx="5" ry="8" transform="rotate(25 78 22)"/>
+          <ellipse cx="14" cy="62" rx="6" ry="9" transform="rotate(-50 14 62)"/>
+          <ellipse cx="86" cy="68" rx="7" ry="10" transform="rotate(40 86 68)"/>
+          <ellipse cx="50" cy="14" rx="5" ry="7"/>
+          <ellipse cx="48" cy="86" rx="6" ry="9"/>
+          <ellipse cx="32" cy="80" rx="4" ry="6" transform="rotate(-20 32 80)"/>
+          <ellipse cx="72" cy="78" rx="5" ry="7" transform="rotate(30 72 78)"/>
+          <circle cx="30" cy="20" r="2.5"/>
+          <circle cx="68" cy="38" r="2"/>
+          <circle cx="22" cy="48" r="2"/>
+          <circle cx="92" cy="48" r="2.5"/>
+          <circle cx="40" cy="68" r="2"/>
+          <circle cx="62" cy="60" r="2.5"/>
+          <circle cx="8" cy="38" r="1.8"/>
+          <circle cx="80" cy="90" r="2"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- Wet streak that smears across as the tongue passes -->
+  <div class="wet-streak"></div>
+
+  <!-- The tongue itself -->
+  <svg class="tongue" viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="tongueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#ff9eb5"/>
+        <stop offset="55%" stop-color="#e26478"/>
+        <stop offset="100%" stop-color="#b84257"/>
+      </linearGradient>
+      <linearGradient id="tongueShine" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.65)"/>
+        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+      </linearGradient>
+    </defs>
+    <path d="M 20,110
+             C 60,40 180,30 280,55
+             C 380,80 480,70 560,100
+             C 580,108 580,120 555,128
+             C 470,150 370,150 270,165
+             C 170,180 70,170 25,135
+             C 12,125 12,118 20,110 Z"
+          fill="url(#tongueGrad)"/>
+    <path d="M 60,108 C 200,90 380,95 540,112"
+          stroke="rgba(140, 30, 50, 0.5)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 80,80 C 200,60 380,65 520,82
+             C 530,85 528,92 515,94
+             C 380,108 200,105 85,98
+             C 72,95 72,84 80,80 Z"
+          fill="url(#tongueShine)" opacity="0.6"/>
+  </svg>
+
+  <!-- Splash bursts at impact points -->
+  <div class="splash s1"><svg><use href="#splashShape"/></svg></div>
+  <div class="splash s2"><svg><use href="#splashShape"/></svg></div>
+  <div class="splash s3"><svg><use href="#splashShape"/></svg></div>
+  <div class="splash s4"><svg><use href="#splashShape"/></svg></div>
+  <div class="splash s5"><svg><use href="#splashShape"/></svg></div>
+
+  <!-- Scattered droplets -->
+  <div class="droplet d1"></div>
+  <div class="droplet d2"></div>
+  <div class="droplet d3"></div>
+  <div class="droplet d4"></div>
+  <div class="droplet d5"></div>
+  <div class="droplet d6"></div>
+  <div class="droplet d7"></div>
+  <div class="droplet d8"></div>
+  <div class="droplet d9"></div>
+  <div class="droplet d10"></div>
+  <div class="droplet d11"></div>
+  <div class="droplet d12"></div>
+
+  <!-- Drips that run down -->
+  <div class="drip dr1"></div>
+  <div class="drip dr2"></div>
+  <div class="drip dr3"></div>
+  <div class="drip dr4"></div>
+
+  <!-- Final smooch -->
+  <div class="smooch">*smooch*</div>
+</div>
+
+<!-- decorative paw prints in background -->
+<div class="paw-bg p1" aria-hidden="true">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="#3a2a1a"><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+</div>
+<div class="paw-bg p2" aria-hidden="true">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="#3a2a1a"><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+</div>
+<div class="paw-bg p3" aria-hidden="true">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="#3a2a1a"><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+</div>
+<div class="paw-bg p4" aria-hidden="true">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="#3a2a1a"><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+</div>
+
+<main class="page">
+
+  <section class="hero">
+    <span class="stamp">Mother's Day &middot; 2026</span>
+    <h1>Happy Mother's Day,<br><em>Mom</em></h1>
+    <p class="from">
+      from your two favorite troublemakers,
+      <br>
+      <span class="name">Gucci</span> &amp; <span class="name">Chewie</span>
+    </p>
+
+    <div class="divider" aria-hidden="true">
+      <span class="line"></span>
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="currentColor"><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+      <span class="line"></span>
+    </div>
+  </section>
+
+  <section class="letters">
+
+    <article class="letter gucci">
+      <span class="pin" aria-hidden="true"></span>
+      <h2>A Letter from Gucci</h2>
+      <p class="salutation">Dearest Mom,</p>
+      <p>I want you to know I have thought about this letter very carefully, the way I think about which spot on the couch deserves my company.</p>
+      <p>You are my person. Yes, Dad is fine. He is tall and useful. But you are the one who knows exactly how I like the blanket arranged, and you never act like that is a strange thing to know.</p>
+      <p>Today I will let you hold me longer than usual. I will not pretend I have somewhere to be. This is my gift.</p>
+      <p>Also: please do not tell Chewie I wrote a longer letter. He will get competitive about it.</p>
+      <p class="signoff">All my love (and most of my patience),</p>
+      <div class="sig-row">
+        <div class="signature">Gucci</div>
+        <div class="polaroid gucci-pic" data-caption="Gucci">
+          <img src="gucci.jpg" alt="Gucci">
+          <!-- <div class="placeholder">add Gucci's pic here</div> -->
+        </div>
+      </div>
+    </article>
+
+    <article class="letter chewie">
+      <span class="pin" aria-hidden="true"></span>
+      <h2>A Letter from Chewie</h2>
+      <p class="salutation">HI MOM!!</p>
+      <p>It is me. CHEWIE. Did you know it is Mother's Day? I did not until five minutes ago and now I am very excited and may need to do a lap around the house.</p>
+      <p>You are the best mom. You let me sniff every bush on the walk. You give me the crusts. You said "good boy" forty-seven times yesterday and yes I was counting.</p>
+      <p>I love you with my whole tail. That is a LOT of love because my tail is enormous and very expressive.</p>
+      <p>I made you a card. The card is me. I am the card.</p>
+      <p class="signoff">Your favorite child,</p>
+      <div class="sig-row">
+        <div class="signature">Chewie</div>
+        <div class="polaroid chewie-pic" data-caption="Chewie">
+          <img src="chewie.jpg" alt="Chewie">
+          <!-- <div class="placeholder">add Chewie's pic here</div> -->
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="love-list">
+    <h2>Reasons we <em>love</em> you</h2>
+    <p class="sub">a non-exhaustive list, compiled jointly</p>
+    <ul>
+      <li>
+        <span class="who g">Gucci</span>
+        <span>You make the bed warm before I even get there. This is a gift I do not take lightly.</span>
+      </li>
+      <li>
+        <span class="who c">Chewie</span>
+        <span>You smell like home and also sometimes like cheese, which is the best combination.</span>
+      </li>
+      <li>
+        <span class="who g">Gucci</span>
+        <span>You keep Dad working so my chicken arrives on schedule. The bare minimum, of course, but I do notice the effort.</span>
+      </li>
+      <li>
+        <span class="who c">Chewie</span>
+        <span>You let me under the blanket even when you do not want a blanket yourself. And then we sleep in together. Best two things ever invented.</span>
+      </li>
+      <li>
+        <span class="who g">Gucci</span>
+        <span>You take Dad seriously when he is being silly, which is most of the time. We are grateful for your patience.</span>
+      </li>
+      <li>
+        <span class="who c">Chewie</span>
+        <span>You came home from Italy and that was the best day of my entire life. I am still thinking about it.</span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="closer">
+    <span class="heart" aria-hidden="true">&hearts;</span>
+    <p>Thanks for being our person. Today, tomorrow, and every walk after.</p>
+
+    <div class="pawline" aria-hidden="true">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g><ellipse cx="30" cy="30" rx="9" ry="13"/><ellipse cx="50" cy="22" rx="9" ry="13"/><ellipse cx="70" cy="30" rx="9" ry="13"/><ellipse cx="82" cy="52" rx="8" ry="11"/><path d="M50,45 C32,45 22,60 22,72 C22,84 32,90 50,90 C68,90 78,84 78,72 C78,60 68,45 50,45 Z"/></g></svg>
+    </div>
+
+    <p class="signed">
+      love always, <span class="g">Gucci</span> &amp; <span class="c">Chewie</span>
+    </p>
+  </section>
+
+</main>
+
+</body>
+</html>
