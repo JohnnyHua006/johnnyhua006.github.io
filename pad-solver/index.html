@@ -136,6 +136,23 @@ button{font:inherit;color:inherit;touch-action:manipulation}
   content:'';position:absolute;inset:-3px;border-radius:50%;
   border:3px solid #7cf3ff;box-shadow:0 0 10px #7cf3ffaa;pointer-events:none;
 }
+.cell.cursor{z-index:4}
+/* Follow-the-orb: everything except the held orb sinks into the background. */
+.board.focus-mode .cell > svg{opacity:.32;transition:opacity .2s}
+.board.focus-mode .cell.cursor > svg{opacity:1}
+.board.focus-mode .cell.cursor{filter:drop-shadow(0 0 7px rgba(124,243,255,.6))}
+
+/* ---------- practice mode ---------- */
+.practice{margin-top:10px;padding:10px;border-radius:11px;border:1px solid var(--line);background:#0e1420}
+.practice.on{border-color:var(--accent)}
+.practice.win{border-color:#3fbf6a;background:#0e1c15}
+.practice.miss{border-color:#c9534f;background:#1d1216}
+.pr-note{font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 9px}
+.pr-note b{color:var(--text)}
+.practice.win .pr-verdict{color:#7ce6a0;font-weight:700}
+.practice.miss .pr-verdict{color:#ff9b9b;font-weight:700}
+.pr-row{display:flex;flex-wrap:wrap;gap:8px}
+.pr-row .btn{flex:1 1 auto;justify-content:center;min-width:96px}
 
 /* ============================================================
    solution path overlay (A13)
@@ -165,6 +182,40 @@ button{font:inherit;color:inherit;touch-action:manipulation}
 .playback .seg button{min-height:40px;padding:0 15px}
 .pb-step{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;min-width:52px;text-align:right}
 .pb-note{color:var(--muted);font-size:12px;margin-top:8px;min-height:1.2em}
+
+/* ---------- step-by-step path guide ---------- */
+.path-details{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.path-details > summary{
+  cursor:pointer;min-height:var(--tap);display:flex;align-items:center;gap:8px;
+  font-weight:600;font-size:13.5px;color:var(--text);list-style:none;
+}
+.path-details > summary::-webkit-details-marker{display:none}
+.path-details > summary::before{content:'\25B8';color:var(--accent);transition:transform .15s}
+.path-details[open] > summary::before{transform:rotate(90deg)}
+.pd-count{color:var(--muted);font-weight:500;font-size:12.5px}
+.pd-body{padding:2px 0 4px}
+.pd-hint{color:var(--muted);font-size:11.5px;margin:8px 0 0}
+.pg-summary{margin:0 0 10px;font-size:13px;color:var(--muted);line-height:1.5}
+.shorthand{
+  margin:0 0 12px;padding:10px 12px;background:#0b1017;border:1px solid var(--line-soft);
+  border-radius:10px;font-size:17px;line-height:1.9;letter-spacing:1px;color:var(--text);
+  word-break:break-word;
+}
+.phase{
+  display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;cursor:pointer;
+  margin:0 0 6px;padding:9px 10px;background:var(--panel);border:1.5px solid var(--line-soft);
+  border-radius:11px;min-height:var(--tap);
+}
+.phase[aria-pressed="true"]{border-color:var(--accent);background:#22314a}
+.phase[data-current="1"]{box-shadow:inset 3px 0 0 var(--accent)}
+.phase .badge{
+  width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:13px;color:#05080e;
+}
+.phase .p-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.phase .p-label{font-size:13.5px;font-weight:600;color:var(--text)}
+.phase .p-arrows{font-size:16px;letter-spacing:1.5px;color:var(--accent);word-break:break-word}
+.phase .p-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 input[type=range]{
   flex:1 1 auto;min-width:0;height:var(--tap);background:transparent;-webkit-appearance:none;appearance:none;
 }
@@ -179,6 +230,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:3px solid #0e1
 /* ============================================================
    forms: team / objectives / solver settings
    ============================================================ */
+.io-field{
+  width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:13px;letter-spacing:.5px;
+}
+a.btn{text-decoration:none;justify-content:center}
 .sel,.num{
   background:var(--panel-2);color:var(--text);border:1px solid var(--line);
   border-radius:10px;min-height:var(--tap);padding:0 10px;font:inherit;font-size:14px;
@@ -404,9 +460,33 @@ details.about p{margin:8px 0}
           <button type="button" data-s="2" aria-pressed="false">2&times;</button>
         </div>
         <button type="button" class="btn" id="pbResolve">Resolve</button>
+        <button type="button" class="btn" id="pbPractice" aria-pressed="false" title="Hide the path and drag it yourself from memory, then get marked on it.">Practice</button>
         <button type="button" class="btn" id="pbExit">Exit</button>
       </div>
+
+      <!-- practice mode: drag it yourself and find out if you got it right -->
+      <div class="practice" id="practiceBar" hidden>
+        <p class="pr-note" id="prNote"></p>
+        <div class="pr-row">
+          <button type="button" class="btn" id="prRetry">Try again</button>
+          <button type="button" class="btn" id="prReveal">Show path</button>
+          <button type="button" class="btn" id="prExit">Done</button>
+        </div>
+      </div>
       <div class="pb-note" id="pbNote"></div>
+
+      <!-- The memorisable form of the drag: numbered phases matching the
+           colours drawn on the board (A13). -->
+      <details class="path-details" id="pathDetails">
+        <summary>Step-by-step guide<span class="pd-count" id="pdCount"></span>
+          <button type="button" class="info" data-help="pathGuide" aria-expanded="false" aria-label="Explain this">?</button></summary>
+        <div class="pd-body">
+          <p class="pg-summary" id="pgSummary"></p>
+          <div class="shorthand" id="pgShorthand"></div>
+          <div id="phaseList"></div>
+          <p class="pd-hint">Tap a move to spotlight it on the board and jump playback there.</p>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -441,6 +521,24 @@ details.about p{margin:8px 0}
           <button type="button" class="btn" id="btnFlags">Strip flags</button>
         </div>
         <p class="hint">Randomize never produces a board that already has a match.</p>
+      </div>
+
+      <div class="card">
+        <h2>Board text<button type="button" class="info" data-help="boardText" aria-expanded="false" aria-label="Explain this">?</button></h2>
+        <input type="text" id="boardString" class="sel io-field" spellcheck="false"
+               autocapitalize="off" autocorrect="off" aria-label="Board string">
+        <div class="row" style="margin-top:8px">
+          <button type="button" class="btn" id="btnCopyBoard">Copy</button>
+          <button type="button" class="btn primary" id="btnImportBoard">Import</button>
+        </div>
+        <p class="hint" id="ioHint">One letter per cell, left to right, top to bottom.</p>
+        <hr class="sep">
+        <h2>Dawnglare<button type="button" class="info" data-help="dawnglare" aria-expanded="false" aria-label="Explain this">?</button></h2>
+        <div class="row">
+          <button type="button" class="btn" id="btnCopyDG">Copy link</button>
+          <a class="btn" id="linkDG" href="#" target="_blank" rel="noopener noreferrer">Open</a>
+        </div>
+        <p class="hint" id="dgHint"></p>
       </div>
     </section>
 
@@ -570,7 +668,8 @@ details.about p{margin:8px 0}
             <b>Max combos</b> — it just makes as many combos as possible.</li>
           <li>Press <b>Solve</b>. Results appear in a few seconds.</li>
           <li>Tap a result to draw its path on the board, then press <b>&#9654;</b> to watch the orb
-            move and the combos resolve.</li>
+            move and the combos resolve. Open <b>Step-by-step guide</b> for the short written
+            version, and <b>Practice</b> to try the drag yourself and be marked on it.</li>
         </ol>
         <p>Nothing is uploaded and nothing is downloaded — the whole tool is this one file, running
           on your device.</p>
@@ -659,15 +758,37 @@ details.about p{margin:8px 0}
         </details>
 
         <details>
-          <summary>Watching the solution</summary>
+          <summary>Following and memorising a path</summary>
           <div>
-            <p>Tap a result and the path is drawn on the board: a <b>pulsing ring</b> on the orb to
-              pick up, arrows showing which way to drag, and a <b>diamond</b> where to let go. The
-              line runs cool-to-warm from start to end, and loops are nudged apart where the path
-              crosses itself.</p>
-            <p><b>&#9654;</b> walks the drag one step at a time. Drag the slider to scrub. <b>Resolve</b>
-              skips to the end and plays the matches clearing, wave by wave. <b>Exit</b> puts your
-              board back exactly as it was — playback never edits it.</p>
+            <p>A 30-step drag drawn as one long snake is close to impossible to memorise, so the
+              path is cut into <b>numbered moves</b>, each drawn in its own colour with a matching
+              numbered badge where it starts. The board and the written guide use the same numbers
+              and colours.</p>
+            <p>Open <b>Step-by-step guide</b> under the board for the short version — something like
+              <code>&#8594;3 &#8595;2</code>, <code>Loop clockwise</code>, <code>Staircase
+              down/right</code>. Repeated shapes are collapsed, so a loop walked twice reads as
+              <code>&#215;2</code> rather than eight separate arrows. Tap any move to spotlight just
+              that piece on the board and jump playback to it.</p>
+            <p><b>&#9654;</b> plays the drag. The held orb <b>glides</b> into place and the orb it
+              passes glides back the other way, exactly as they do in game, and every other orb fades
+              back so there is only one thing to follow. Drag the slider to scrub.
+              <b>Resolve</b> skips to the end and plays the matches clearing, wave by wave.
+              <b>Exit</b> puts your board back exactly as it was — playback never edits it.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Practice mode</summary>
+          <div>
+            <p>Press <b>Practice</b> and the path disappears. Drag an orb across the board from
+              memory, exactly as you would in game, and let go — the tool then tells you whether you
+              built the board it was aiming for.</p>
+            <p>It marks the <b>board</b>, not your route. If you reach the same arrangement by a
+              different drag that counts as correct, because it is worth exactly the same in game.
+              Miss it and you are told how many orbs are out of place and how many combos your
+              attempt actually makes, so you can see how close you were.</p>
+            <p><b>Try again</b> resets the board, <b>Show path</b> brings the solution back to
+              compare against, and <b>Done</b> leaves practice.</p>
           </div>
         </details>
 
@@ -733,27 +854,51 @@ details.about p{margin:8px 0}
 
   <details class="about">
     <summary>About / notes</summary>
-    <p><b>Run it:</b> double-click <code>index.html</code>. No server, no build step, no network requests -
-      it works offline from <code>file://</code> and identically on GitHub Pages.</p>
-    <p><b>Orb letters</b> (board-string encoding, row-major, arrives fully in Phase 6):
-      <code>R</code> fire, <code>B</code> water, <code>G</code> wood, <code>L</code> light, <code>D</code> dark,
-      <code>H</code> heart, <code>J</code> jammer, <code>P</code> poison, <code>M</code> mortal poison,
-      <code>o</code> empty.</p>
-    <p><b>Solving:</b> pick a preset on the Team tab, add any hard constraints on Objectives, then press
-      Solve. The search runs in a Web Worker built at runtime from this file's own script blocks, so the
-      UI stays responsive; Cancel still returns the best path found so far. Combo counts are
-      <b>guaranteed</b> - deterministic cascades only. Any "with skyfall" figure is a Monte Carlo average
-      over random refills and never affects the ranking unless you turn that off in Solver settings.</p>
-    <p><b>Tuning:</b> every damage and awakening constant lives in one <code>CONFIG</code> object in the
-      score section (combo and match multipliers, TPA/VDP/row/7c/L values, the attribute wheel, path
-      costs, skyfall samples).</p>
-    <p><b>Orb art</b> is drawn procedurally as inline SVG, so no game sprites are bundled. To use your own
-      local sprite sheet instead, edit the <code>SPRITE</code> object near the top of the render section
-      (<code>enabled</code>, <code>url</code>, <code>cols</code>, <code>rows</code>, <code>order</code>) and point
-      <code>url</code> at a file next to <code>index.html</code> or a <code>data:</code> URI.</p>
-    <p>Inspired by padopt / pndopt / combo.tips and pazusoba; implementation is independent.</p>
-    <p><button type="button" class="btn" id="btnTests">Run self-tests</button>
-      &nbsp;<span>or open <code>index.html?test</code></span></p>
+    <p><b>Run it:</b> double-click <code>index.html</code>. No server, no build step, no network
+      requests &mdash; it works offline from <code>file://</code> and identically on GitHub Pages.
+      Everything (markup, styles, engine, solver, worker) lives in this one file.</p>
+
+    <p><b>Board string:</b> one letter per cell, row-major (left to right, top to bottom):
+      <code>R</code> fire, <code>B</code> water, <code>G</code> wood, <code>L</code> light,
+      <code>D</code> dark, <code>H</code> heart, <code>J</code> jammer, <code>P</code> poison,
+      <code>M</code> mortal poison, <code>o</code> empty. A 6&times;5 board is 30 letters.
+      If any orb carries a state, a tail is appended after a <code>/</code> with one character per
+      cell: <code>.</code> none, <code>+</code> enhanced, <code>L</code> locked, <code>*</code> both.
+      Boards without states encode to the plain format exactly.</p>
+
+    <p><b>Dawnglare:</b> the Board text card also emits a
+      <code>pad.dawnglare.com</code> link so a board can be cross-checked in the community
+      simulator. Its legend uses the same letters we do for the eight orbs it knows
+      (<code>R B G L D H J P</code>); it has no code for mortal poison and no empty cell, so those
+      two degrade in that view and the app tells you when it happens. Our own string stays the
+      source of truth.</p>
+
+    <p><b>Saved data:</b> the last board, your team profile and the solver settings are kept in this
+      browser via <code>localStorage</code>, under the single key <code>pad-solver.v1</code>. Nothing
+      leaves your device. <span id="storeNote"></span></p>
+    <p><button type="button" class="btn" id="btnReset">Reset saved data</button></p>
+
+    <p><b>Tuning the numbers:</b> every damage and awakening constant sits in one
+      <code>CONFIG</code> object in the score section &mdash; combo and match multipliers, TPA / VDP /
+      row / 7c / L values, the attribute wheel, path costs and skyfall sample count. GungHo
+      rebalances awakenings periodically, so treat those as editable rather than fixed.</p>
+
+    <p><b>Orb art</b> is drawn procedurally as inline SVG, so no game sprites are bundled. To use
+      your own local sprite sheet instead, edit the <code>SPRITE</code> object near the top of the
+      render section (<code>enabled</code>, <code>url</code>, <code>cols</code>, <code>rows</code>,
+      <code>order</code>) and point <code>url</code> at a file next to <code>index.html</code> or a
+      <code>data:</code> URI.</p>
+
+    <p><b>Tests:</b> open <code>index.html?test</code> or press the button below to run the inline
+      suite &mdash; matching and the connected-merge rule, deterministic cascades, every shape
+      detector, the scoring model, the solver, and the path guide.</p>
+    <p><button type="button" class="btn" id="btnTests">Run self-tests</button></p>
+
+    <p><b>Credits:</b> inspired by padopt / pndopt / combo.tips for its profile-and-weights model and
+      single-page approach, and by pazusoba for the fixed-size priority-queue beam search and its
+      profile types. Both were read as references only; this implementation is independent.
+      <a href="https://pad.dawnglare.com" target="_blank" rel="noopener noreferrer">Dawnglare</a> is
+      the community-standard simulator used here as the interop target.</p>
   </details>
 
   <p class="foot">Phases 1-5 complete &middot; next: localStorage, board-string import/export, Dawnglare interop.</p>
@@ -1229,6 +1374,20 @@ const Engine = (function () {
 
   /* ---------- moving the cursor (A1 free-move) ------------------------- */
 
+  /**
+   * Which direction leads from cell `a` to cell `b`, or -1 if they are not
+   * neighbours. Used by practice mode to turn a finger drag into path steps.
+   */
+  function dirBetween(b, from, to) {
+    const dr = ((to / b.w) | 0) - ((from / b.w) | 0);
+    const dc = (to % b.w) - (from % b.w);
+    if (!dr && !dc) return -1;
+    for (let d = 0; d < DIRS.length; d++) {
+      if (DIRS[d].dr === dr && DIRS[d].dc === dc) return d;
+    }
+    return -1;
+  }
+
   /** Where does `dir` take the cursor from cell `i`? -1 when off the board. */
   function stepTarget(b, i, dir) {
     const d = DIRS[dir];
@@ -1265,12 +1424,69 @@ const Engine = (function () {
     return s;
   }
 
+  /* Orb-state characters for the optional "/flags" tail, indexed by flag bits. */
+  const FLAG_CHAR = ['.', '+', 'L', '*'];
+
+  /**
+   * The documented board string, plus an optional "/flags" tail so that + and
+   * lock marks survive a copy-paste. The tail is only added when some orb
+   * actually carries a flag, so an ordinary board still encodes to exactly the
+   * plain format in A14 and stays readable by anything expecting it.
+   */
+  function encodeBoardFull(b) {
+    let tail = '', any = false;
+    for (let i = 0; i < b.flags.length; i++) {
+      const v = b.flags[i] & 3;
+      tail += FLAG_CHAR[v];
+      if (v) any = true;
+    }
+    return any ? encodeBoard(b) + '/' + tail : encodeBoard(b);
+  }
+
+  /**
+   * Dawnglare interop (A14). Its own source lists the legend
+   * "R = Red, B = Blue, G = Green, D = Dark, L = Light, H = Heart,
+   * J = Jammer, P = Poison" - the same letters we use, so the eight orb types
+   * it knows about need no translation. It has no code for mortal poison and no
+   * concept of an empty cell, so those two degrade and are reported in `notes`.
+   * Our own string stays the source of truth.
+   */
+  function toDawnglare(b) {
+    const notes = [];
+    let patt = '';
+    for (let i = 0; i < b.cells.length; i++) {
+      const t = b.cells[i];
+      if (t === ORB.MORTAL) {
+        patt += ORB_CHAR[ORB.POISON];
+        if (notes.indexOf('mortal poison is shown as ordinary poison') < 0) notes.push('mortal poison is shown as ordinary poison');
+      } else if (t === ORB.EMPTY) {
+        patt += ORB_CHAR[ORB.HEART];
+        if (notes.indexOf('empty cells are filled in as hearts') < 0) notes.push('empty cells are filled in as hearts');
+      } else {
+        patt += ORB_CHAR[t];
+      }
+    }
+    return {
+      patt: patt,
+      notes: notes,
+      url: 'https://pad.dawnglare.com/?height=' + b.h + '&width=' + b.w + '&patt=' + patt
+    };
+  }
+
   /**
    * Accepts a flat board string (needs w/h) or a multi-line block whose shape
    * gives the dimensions - the readable form used by the self-test fixtures.
    */
   function parseBoard(text, w, h) {
-    const lines = String(text).split('\n').map(s => s.trim()).filter(s => s.length);
+    /* Split off the optional "/flags" tail before anything else. */
+    let body = String(text);
+    let flagStr = null;
+    const slash = body.indexOf('/');
+    if (slash >= 0) {
+      flagStr = body.slice(slash + 1).replace(/\s+/g, '');
+      body = body.slice(0, slash);
+    }
+    const lines = body.split('\n').map(s => s.trim()).filter(s => s.length);
     let chars;
     if (lines.length > 1) {
       w = lines[0].length; h = lines.length;
@@ -1285,7 +1501,27 @@ const Engine = (function () {
       const t = ORB_CHAR.indexOf(up === 'O' ? 'o' : up);
       b.cells[i] = t < 0 ? ORB.EMPTY : t;
     }
+    if (flagStr) {
+      for (let i = 0; i < Math.min(flagStr.length, w * h); i++) {
+        const v = FLAG_CHAR.indexOf(flagStr[i] === 'l' ? 'L' : flagStr[i]);
+        b.flags[i] = v > 0 ? v : 0;
+      }
+    }
     return b;
+  }
+
+  /** Is this text a usable board string? Returns a reason when it is not. */
+  function validateBoardString(text, w, h) {
+    const body = String(text).split('/')[0].replace(/\s+/g, '');
+    if (!body.length) return { ok: false, reason: 'Nothing to import.' };
+    const bad = body.toUpperCase().split('').filter(ch => ORB_CHAR.indexOf(ch === 'O' ? 'o' : ch) < 0);
+    if (bad.length) {
+      return { ok: false, reason: 'Unknown letter "' + bad[0] + '". Use R B G L D H J P M or o.' };
+    }
+    if (body.length !== w * h) {
+      return { ok: false, reason: body.length + ' orbs given, but a ' + w + '\u00d7' + h + ' board needs ' + (w * h) + '.' };
+    }
+    return { ok: true, reason: '' };
   }
 
   /* ---------- bulk edits ---------------------------------------------- */
@@ -1343,7 +1579,8 @@ const Engine = (function () {
     fillBoard, clearFlags, randomize, countTypes,
     makeScratch, markCleared, collectCombos, describeCombo, gravity,
     resolveBoard, evaluateBoard, createFeatures, colStat, skyfallProxy, clusterPotential,
-    stepTarget, applyPath, encodeBoard, parseBoard
+    stepTarget, dirBetween, applyPath,
+    encodeBoard, encodeBoardFull, parseBoard, validateBoardString, toDawnglare, FLAG_CHAR
   };
 })();
 </script>
@@ -2555,6 +2792,301 @@ const Solver = (function () {
 </script>
 
 <!-- ================================================================
+     pathguide - turns a 30-step drag into something a human can hold in
+     their head: run-length chunks, plus the loops / figure-8s / staircases
+     the path actually traces. Pure and DOM-free; main thread only.
+     ================================================================ -->
+<script id="pathguide-src">
+const PathGuide = (function () {
+  'use strict';
+  const E = Engine;
+
+  /* Direction index 0-7 = U D L R UL UR DL DR, matching Engine.DIRS. */
+  const ARROW = ['\u2191', '\u2193', '\u2190', '\u2192', '\u2196', '\u2197', '\u2199', '\u2198'];
+  const WORD  = ['up', 'down', 'left', 'right', 'up-left', 'up-right', 'down-left', 'down-right'];
+  const OPP = E.OPPOSITE;
+
+  /* One hue per phase, cycled. Picked to stay legible over any orb colour. */
+  const PHASE_COLORS = ['#4fd6ff', '#7bff9b', '#ffd166', '#ff8fa3', '#c58bff', '#ffab5e'];
+
+  /* A phase longer than this stops being one memorable movement. */
+  const MAX_CHUNK_STEPS = 8;
+  const MAX_CHUNK_RUNS = 3;
+  /* A staircase/zigzag is one instruction, so it may run longer than a chunk. */
+  const MAX_PATTERN_STEPS = 16;
+  /* Past this length a "loop" is not a circle anyone can picture - it is just
+     a wander that happened to end where it started, so it gets chunked like
+     ordinary path instead of being described as one movement. */
+  const MAX_LOOP_STEPS = 12;
+
+  const cellName = (b, i) => 'r' + (((i / b.w) | 0) + 1) + 'c' + ((i % b.w) + 1);
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  /** Replay the drag, recording the cell under the cursor after every step. */
+  function walk(board, start, steps) {
+    const visited = [start];
+    let cur = start;
+    for (let k = 0; k < steps.length; k++) {
+      const nx = E.stepTarget(board, cur, steps[k]);
+      if (nx < 0) break;
+      cur = nx;
+      visited.push(cur);
+    }
+    return visited;
+  }
+
+  /** Run-length encode a slice: four separate taps right become "right 4". */
+  function runsIn(steps, from, to) {
+    const runs = [];
+    for (let k = from; k < to; k++) {
+      const last = runs[runs.length - 1];
+      if (last && last.dir === steps[k]) { last.count++; last.to = k + 1; }
+      else runs.push({ dir: steps[k], count: 1, from: k, to: k + 1 });
+    }
+    return runs;
+  }
+
+  /**
+   * Closed loops: the cursor arriving back on a cell it has already stood on.
+   * Forgetting everything inside a loop once it closes keeps the loops
+   * non-overlapping, which is what lets each be described on its own - and is
+   * what makes a figure-8 come out as two loops rather than one tangle.
+   */
+  function findLoops(visited) {
+    const loops = [], seen = new Map();
+    for (let j = 0; j < visited.length; j++) {
+      const c = visited[j];
+      if (seen.has(c)) {
+        const i = seen.get(c);
+        if (j - i >= 3) loops.push({ from: i, to: j });
+        for (let k = i; k < j; k++) seen.delete(visited[k]);
+      }
+      seen.set(c, j);
+    }
+    return loops;
+  }
+
+  /** Shoelace area. Rows grow downward, so a positive area means clockwise. */
+  function rotationOf(board, visited, from, to) {
+    let a = 0;
+    for (let k = from; k < to; k++) {
+      const p = visited[k], q = visited[k + 1 === to ? from : k + 1];
+      const px = p % board.w, py = (p / board.w) | 0;
+      const qx = q % board.w, qy = (q / board.w) | 0;
+      a += px * qy - qx * py;
+    }
+    return a / 2;
+  }
+
+  /** Name a straight-ish chunk after the shape it traces, when it traces one. */
+  function namePlain(runs) {
+    if (runs.length === 1) return cap(WORD[runs[0].dir]) + ' ' + runs[0].count;
+    const dirs = runs.map(r => r.dir);
+
+    /* Staircase: single steps alternating between two directions. */
+    if (runs.length >= 3 && runs.every(r => r.count === 1) &&
+        new Set(dirs).size === 2 && dirs.every((d, k) => d === dirs[k % 2])) {
+      return 'Staircase ' + WORD[dirs[0]] + '/' + WORD[dirs[1]];
+    }
+    /* Zigzag: one direction every other run, the rest reversing each time. */
+    if (runs.length >= 4) {
+      const evens = dirs.filter((_, k) => k % 2 === 0);
+      const odds = dirs.filter((_, k) => k % 2 === 1);
+      if (evens.every(d => d === evens[0]) && odds.length >= 2 &&
+          odds.every((d, k) => d === (k % 2 === 0 ? odds[0] : OPP[odds[0]]))) {
+        return 'Zigzag ' + WORD[evens[0]];
+      }
+    }
+    return runs.map(r => cap(WORD[r.dir]) + ' ' + r.count).join(', ');
+  }
+
+  /**
+   * How far a staircase or zigzag starting at `p` runs. A repeating weave is
+   * ONE instruction to a human ("staircase down-right"), so it has to be
+   * allowed to outgrow the normal run cap - otherwise a six-step staircase
+   * gets chopped into two phases that each look like noise.
+   */
+  function alternatingEnd(steps, p) {
+    const runs = runsIn(steps, p, steps.length);
+    if (runs.length < 3) return -1;
+    const d0 = runs[0].dir, d1 = runs[1].dir;
+    if (d0 === d1) return -1;
+
+    /* Staircase: every run a single step, directions strictly alternating. */
+    let n = 0;
+    while (n < runs.length && runs[n].count === 1 && runs[n].dir === (n % 2 ? d1 : d0)) n++;
+    const stair = n >= 3 ? runs[n - 1].to : -1;
+
+    /* Zigzag: the same direction every other run, the others reversing. */
+    let zig = -1;
+    if (OPP[d1] !== d1) {
+      let m = 0;
+      while (m < runs.length) {
+        const want = m % 2 === 0 ? d0 : ((((m - 1) >> 1) % 2 === 0) ? d1 : OPP[d1]);
+        if (runs[m].dir !== want) break;
+        m++;
+      }
+      if (m >= 4) zig = runs[m - 1].to;
+    }
+    /* A zigzag opens with three steps that also look like a staircase, so
+       whichever reading explains MORE of the path wins. */
+    return Math.max(stair, zig);
+  }
+
+  /* Only loops short enough to describe as a loop get to interrupt a chunk. */
+  function isLoopStart(loopAt, k) {
+    const L = loopAt.get(k);
+    return !!L && L.to - L.from <= MAX_LOOP_STEPS;
+  }
+
+  /** Split the path into phases, breaking every short loop out as its own. */
+  function buildChunks(steps, visited) {
+    const loopAt = new Map();
+    for (const L of findLoops(visited)) if (!loopAt.has(L.from)) loopAt.set(L.from, L);
+
+    const chunks = [];
+    let p = 0;
+    while (p < steps.length) {
+      const L = loopAt.get(p);
+      if (L && L.to <= steps.length && L.to - L.from <= MAX_LOOP_STEPS) {
+        chunks.push({ kind: 'loop', from: p, to: L.to });
+        p = L.to;
+        continue;
+      }
+      /* A weave gets to stay in one piece, up to a still-memorable length. */
+      const alt = alternatingEnd(steps, p);
+      if (alt > p && alt - p <= MAX_PATTERN_STEPS) {
+        let stop = alt;
+        for (let k = p + 1; k < alt; k++) if (isLoopStart(loopAt, k)) { stop = k; break; }
+        if (stop - p >= 3) {
+          chunks.push({ kind: 'path', from: p, to: stop });
+          p = stop;
+          continue;
+        }
+      }
+      let end = p, runs = 0, lastDir = -1;
+      while (end < steps.length && end - p < MAX_CHUNK_STEPS) {
+        if (end > p && isLoopStart(loopAt, end)) break;   // let the next loop start clean
+        if (steps[end] !== lastDir) {
+          if (runs >= MAX_CHUNK_RUNS) break;
+          runs++;
+          lastDir = steps[end];
+        }
+        end++;
+      }
+      if (end === p) end = p + 1;
+      chunks.push({ kind: 'path', from: p, to: end });
+      p = end;
+    }
+    return chunks;
+  }
+
+  function decorate(board, steps, visited, c) {
+    c.runs = runsIn(steps, c.from, c.to);
+    c.stepCount = c.to - c.from;
+    c.fromCell = cellName(board, visited[Math.min(c.from, visited.length - 1)]);
+    c.toCell = cellName(board, visited[Math.min(c.to, visited.length - 1)]);
+    c.arrows = c.runs.map(r => ARROW[r.dir] + (r.count > 1 ? r.count : '')).join(' ');
+    c.shorthand = c.arrows;
+    if (c.kind === 'loop') {
+      c.rotation = rotationOf(board, visited, c.from, c.to);
+      c.label = 'Loop ' + (c.rotation > 0 ? 'clockwise' : 'anticlockwise');
+    } else if (c.kind === 'figure8') {
+      c.label = 'Figure-8';
+    } else {
+      c.label = namePlain(c.runs);
+    }
+    return c;
+  }
+
+  /** Two touching loops that wind opposite ways are a figure-8, so say so. */
+  function mergeFigureEights(board, steps, visited, chunks) {
+    const out = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const a = chunks[i], b = chunks[i + 1];
+      if (a.kind === 'loop' && b && b.kind === 'loop' && a.rotation && b.rotation &&
+          (a.rotation > 0) !== (b.rotation > 0)) {
+        const m = decorate(board, steps, visited, { kind: 'figure8', from: a.from, to: b.to });
+        m.label = 'Figure-8 through ' + cellName(board, visited[b.from]);
+        m.pivot = visited[b.from];
+        out.push(m);
+        i++;
+      } else out.push(a);
+    }
+    return out;
+  }
+
+  /** "That same loop, three times" is one thing to remember, not three. */
+  function mergeRepeats(chunks) {
+    const out = [];
+    for (let i = 0; i < chunks.length;) {
+      let k = 1;
+      while (i + k < chunks.length &&
+             chunks[i + k].kind === chunks[i].kind &&
+             chunks[i + k].arrows === chunks[i].arrows) k++;
+      if (k >= 2) {
+        const first = chunks[i], last = chunks[i + k - 1];
+        out.push(Object.assign({}, first, {
+          to: last.to,
+          repeat: k,
+          stepCount: last.to - first.from,
+          toCell: last.toCell,
+          label: first.label + ' \u00d7' + k,
+          shorthand: '(' + first.arrows + ') \u00d7' + k
+        }));
+        i += k;
+      } else { out.push(chunks[i]); i++; }
+    }
+    return out;
+  }
+
+  function summarize(board, chunks, visited) {
+    const tally = kind => chunks.reduce((n, c) => n + (c.kind === kind ? (c.repeat || 1) : 0), 0);
+    const loops = tally('loop'), eights = tally('figure8');
+    const shapes = [];
+    if (loops) shapes.push(loops + (loops === 1 ? ' loop' : ' loops'));
+    if (eights) shapes.push(eights + (eights === 1 ? ' figure-8' : ' figure-8s'));
+    return 'Pick up ' + cellName(board, visited[0]) + ', follow ' + chunks.length +
+      (chunks.length === 1 ? ' move' : ' moves') +
+      (shapes.length ? ' (' + shapes.join(' and ') + ')' : '') +
+      ', release at ' + cellName(board, visited[visited.length - 1]) + '.';
+  }
+
+  /** How many cells the drag passes through more than once. */
+  function countRevisits(visited) {
+    const seen = new Set(), twice = new Set();
+    for (const c of visited) { if (seen.has(c)) twice.add(c); else seen.add(c); }
+    return twice.size;
+  }
+
+  function analyze(board, start, steps) {
+    const visited = walk(board, start, steps);
+    let chunks = buildChunks(steps, visited).map(c => decorate(board, steps, visited, c));
+    chunks = mergeFigureEights(board, steps, visited, chunks);
+    chunks = mergeRepeats(chunks);
+    chunks.forEach((c, i) => {
+      c.index = i + 1;
+      c.color = PHASE_COLORS[i % PHASE_COLORS.length];
+    });
+    return {
+      start: start,
+      steps: steps.slice(),
+      visited: visited,
+      phases: chunks,
+      shorthand: chunks.map(c => c.shorthand).join('   \u00b7   '),
+      summary: summarize(board, chunks, visited),
+      startCell: cellName(board, visited[0]),
+      endCell: cellName(board, visited[visited.length - 1]),
+      revisits: countRevisits(visited),
+      totalSteps: visited.length - 1
+    };
+  }
+
+  return { analyze, ARROW, WORD, PHASE_COLORS, cellName, findLoops, rotationOf, runsIn, namePlain };
+})();
+</script>
+
+<!-- ================================================================
      render - procedural orb SVG symbols (A11) + board grid drawing.
      PHASE 5 adds the animated path overlay in this section.
      ================================================================ -->
@@ -2824,17 +3356,15 @@ const Render = (function () {
      coordinate space is simply "pixels relative to the board".
      ==================================================================== */
 
-  let overlayEl = null, boardWrapEl = null, lastVisited = null;
+  let overlayEl = null, boardWrapEl = null, lastVisited = null, lastOpts = null;
 
   function attachOverlay(svg) {
     overlayEl = svg;
     boardWrapEl = svg.parentElement;
     /* Keep the drawing aligned when the viewport (and so the cell size) changes. */
-    if (typeof ResizeObserver === 'function') {
-      new ResizeObserver(() => { if (lastVisited) drawPath(lastVisited); }).observe(boardWrapEl);
-    } else {
-      window.addEventListener('resize', () => { if (lastVisited) drawPath(lastVisited); });
-    }
+    const redraw = () => { if (lastVisited) drawPath(lastVisited, lastOpts); };
+    if (typeof ResizeObserver === 'function') new ResizeObserver(redraw).observe(boardWrapEl);
+    else window.addEventListener('resize', redraw);
   }
 
   /* Cell centres in overlay coordinates. The cells' offsetParent is the
@@ -2871,9 +3401,22 @@ const Render = (function () {
    * chevrons along the way, a pulsing start ring and a diamond end marker.
    * Repeat visits to a cell are nudged apart so self-crossings stay legible.
    */
-  function drawPath(visited) {
+  /**
+   * Draw the solution path.
+   *
+   * A single 30-step line is almost impossible to memorise, so the path is cut
+   * into numbered phases (PathGuide) and each is drawn in its OWN colour with a
+   * numbered badge where it begins. "Loop clockwise, then zigzag down, then
+   * right 4" is something a person can hold in their head; a 30-arrow snake is
+   * not. Phases draw on one after another so the order is obvious, and a single
+   * phase can be spotlit while the rest dim.
+   */
+  function drawPath(visited, opts) {
     if (!overlayEl || !visited || visited.length < 2 || !cellEls.length) { clearPath(); return; }
     lastVisited = visited;
+    lastOpts = opts = opts || {};
+    const phases = (opts.phases && opts.phases.length) ? opts.phases : null;
+    const focus = (opts.focus == null) ? -1 : opts.focus;
     const W = boardWrapEl.clientWidth, H = boardWrapEl.clientHeight, s = cellSize();
     overlayEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
@@ -2883,20 +3426,61 @@ const Render = (function () {
       const k = seen.get(i) || 0;
       seen.set(i, k + 1);
       if (!k) return c;
-      /* golden-angle spiral offset for the 2nd, 3rd, ... visit to one cell */
-      const a = k * 2.39996, r = s * 0.12 * Math.min(k, 3);
+      /* golden-angle spiral offset for the 2nd, 3rd, ... visit to one cell, so
+         a loop retraced twice reads as two strands instead of one thick line */
+      const a = k * 2.39996, r = s * 0.13 * Math.min(k, 3);
       return { x: c.x + Math.cos(a) * r, y: c.y + Math.sin(a) * r };
     });
 
-    const d = roundedPath(pts, s * 0.34);
+    const whole = roundedPath(pts, s * 0.34);
     const first = pts[0], last = pts[pts.length - 1];
     const dash = s * 0.30, gap = s * 0.42;
 
+    /* Segments: one per phase, or the whole path when unanalysed. */
+    const segs = phases
+      ? phases.map(p => ({ p0: p.from, p1: Math.min(p.to, pts.length - 1), color: p.color, index: p.index }))
+      : [{ p0: 0, p1: pts.length - 1, color: '#8f8bff', index: 0 }];
+
+    let bodies = '', flows = '', badges = '';
+    segs.forEach((seg, n) => {
+      if (seg.p1 <= seg.p0) return;
+      const sub = pts.slice(seg.p0, seg.p1 + 1);
+      const d = roundedPath(sub, s * 0.34);
+      const dim = focus >= 0 && seg.index !== focus;
+      const width = (focus >= 0 && seg.index === focus) ? s * 0.32 : s * 0.26;
+      bodies +=
+        '<path class="path-main" data-phase="' + seg.index + '" d="' + d + '" fill="none" stroke="' + seg.color +
+        '" stroke-opacity="' + (dim ? '.2' : '.95') + '" stroke-width="' + width.toFixed(1) +
+        '" stroke-linecap="round" stroke-linejoin="round" style="transition-delay:' + (n * 110) + 'ms"/>';
+      if (!dim) {
+        flows +=
+          '<path class="path-flow" d="' + d + '" fill="none" stroke="#ffffff" stroke-opacity=".8" stroke-width="' +
+          (s * 0.085).toFixed(1) + '" stroke-linecap="round" stroke-dasharray="' + dash.toFixed(1) + ' ' +
+          gap.toFixed(1) + '" style="--flow-end:' + (-(dash + gap)).toFixed(1) + 'px"/>';
+      }
+      /* numbered badge where each phase begins */
+      const at = pts[seg.p0];
+      if (phases) {
+        badges +=
+          '<g transform="translate(' + at.x.toFixed(1) + ',' + at.y.toFixed(1) + ')" opacity="' + (dim ? '.35' : '1') + '">' +
+          '<circle r="' + (s * 0.24).toFixed(1) + '" fill="' + seg.color + '" stroke="#05080e" stroke-width="' +
+          (s * 0.045).toFixed(1) + '"/>' +
+          '<text x="0" y="0" text-anchor="middle" dominant-baseline="central" fill="#05080e" ' +
+          'font-family="ui-sans-serif,system-ui,sans-serif" font-weight="700" font-size="' +
+          (s * 0.28).toFixed(1) + '">' + seg.index + '</text></g>';
+      }
+    });
+
+    /* Chevrons ride on top of every segment so direction stays readable. */
     let chevrons = '';
     const cs = s * 0.30;
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i], b = pts[i + 1];
       if (dist(a, b) < s * 0.45) continue;
+      if (focus >= 0 && phases) {
+        const owner = phases.find(p => i >= p.from && i < p.to);
+        if (owner && owner.index !== focus) continue;
+      }
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
       chevrons +=
@@ -2907,44 +3491,35 @@ const Render = (function () {
 
     overlayEl.innerHTML =
       '<defs>' +
-        '<linearGradient id="pathGrad" gradientUnits="userSpaceOnUse" ' +
-          'x1="' + first.x.toFixed(1) + '" y1="' + first.y.toFixed(1) + '" ' +
-          'x2="' + last.x.toFixed(1) + '" y2="' + last.y.toFixed(1) + '">' +
-          '<stop offset="0" stop-color="#63f0ff"/><stop offset=".5" stop-color="#8f8bff"/>' +
-          '<stop offset="1" stop-color="#ffb03a"/></linearGradient>' +
         '<filter id="pathGlow" x="-40%" y="-40%" width="180%" height="180%">' +
           '<feGaussianBlur stdDeviation="' + (s * 0.09).toFixed(2) + '"/></filter>' +
       '</defs>' +
       /* dark blurred copy underneath: keeps the line readable over any orb */
-      '<path d="' + d + '" fill="none" stroke="#04070d" stroke-opacity=".8" stroke-width="' + (s * 0.44).toFixed(1) +
+      '<path d="' + whole + '" fill="none" stroke="#04070d" stroke-opacity=".8" stroke-width="' + (s * 0.44).toFixed(1) +
         '" stroke-linecap="round" stroke-linejoin="round" filter="url(#pathGlow)"/>' +
-      '<path class="path-main" d="' + d + '" fill="none" stroke="url(#pathGrad)" stroke-opacity=".92" stroke-width="' +
-        (s * 0.26).toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<path class="path-flow" d="' + d + '" fill="none" stroke="#ffffff" stroke-opacity=".85" stroke-width="' +
-        (s * 0.085).toFixed(1) + '" stroke-linecap="round" stroke-dasharray="' + dash.toFixed(1) + ' ' + gap.toFixed(1) +
-        '" style="--flow-end:' + (-(dash + gap)).toFixed(1) + 'px"/>' +
-      chevrons +
+      bodies + flows + chevrons +
       '<g transform="translate(' + first.x.toFixed(1) + ',' + first.y.toFixed(1) + ')">' +
         '<circle class="path-pulse" r="' + (s * 0.44).toFixed(1) + '" fill="none" stroke="#7cf3ff" stroke-width="' + (s * 0.07).toFixed(1) + '"/>' +
-        '<circle r="' + (s * 0.19).toFixed(1) + '" fill="#7cf3ff" stroke="#05080e" stroke-width="' + (s * 0.045).toFixed(1) + '"/>' +
       '</g>' +
       '<g transform="translate(' + last.x.toFixed(1) + ',' + last.y.toFixed(1) + ') rotate(45)">' +
         '<rect x="' + (-s * 0.21).toFixed(1) + '" y="' + (-s * 0.21).toFixed(1) + '" width="' + (s * 0.42).toFixed(1) +
         '" height="' + (s * 0.42).toFixed(1) + '" rx="' + (s * 0.07).toFixed(1) +
         '" fill="#ffb03a" stroke="#05080e" stroke-width="' + (s * 0.05).toFixed(1) + '"/>' +
-      '</g>';
+      '</g>' + badges;
 
-    /* Draw-on animation: reveal the line from start to end on selection. */
-    const main = overlayEl.querySelector('.path-main');
-    const len = main.getTotalLength();
-    main.style.strokeDasharray = len + ' ' + len;
-    main.style.strokeDashoffset = len;
-    main.getBoundingClientRect();                 // force a reflow so the transition runs
-    main.style.strokeDashoffset = '0';
+    /* Draw-on animation, staggered so the phases appear in order. */
+    overlayEl.querySelectorAll('.path-main').forEach(p => {
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = len + ' ' + len;
+      p.style.strokeDashoffset = len;
+      p.getBoundingClientRect();                  // force a reflow so it animates
+      p.style.strokeDashoffset = '0';
+    });
   }
 
   function clearPath() {
     lastVisited = null;
+    lastOpts = null;
     if (overlayEl) overlayEl.innerHTML = '';
   }
 
@@ -2960,6 +3535,54 @@ const Render = (function () {
   }
   function clearMarks() {
     for (const el of cellEls) el.classList.remove('clearing');
+  }
+
+  /**
+   * Glide two orbs past each other instead of teleporting them.
+   *
+   * An instant swap gives the eye nothing to track, which is exactly what makes
+   * a long drag hard to follow. Here the held orb travels to its neighbour and
+   * the neighbour travels back into its place, so the movement reads as one
+   * continuous gesture. Resolves once the orbs are in position; the caller
+   * applies the model swap and repaints in the same microtask, so the final
+   * paint lands with no flash.
+   */
+  function glideSwap(a, b, w, ms) {
+    return new Promise(resolve => {
+      const ca = cellEls[a], cb = cellEls[b];
+      if (!ca || !cb || cellEls.length <= w) { resolve(); return; }
+      const ea = ca.firstElementChild, eb = cb.firstElementChild;
+      const px = cellEls[1].offsetLeft - cellEls[0].offsetLeft;
+      const py = cellEls[w].offsetTop - cellEls[0].offsetTop;
+      const dx = ((b % w) - (a % w)) * px;
+      const dy = (((b / w) | 0) - ((a / w) | 0)) * py;
+      const ease = 'transform ' + ms + 'ms cubic-bezier(.42,.06,.28,1)';
+      ca.style.zIndex = '6';                    // the held orb rides over the top
+      /* Park both orbs at their start with transitions off, force one reflow,
+         and only then arm the transition. Setting `transition` and `transform`
+         in the same tick can be collapsed into a jump, and a jump is the exact
+         thing this function exists to avoid. */
+      ea.style.transition = 'none'; eb.style.transition = 'none';
+      ea.style.transform = 'translate(0px,0px)';
+      eb.style.transform = 'translate(0px,0px)';
+      ca.getBoundingClientRect();
+      ea.style.transition = ease;
+      eb.style.transition = ease;
+      ea.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      eb.style.transform = 'translate(' + (-dx) + 'px,' + (-dy) + 'px)';
+      setTimeout(() => {
+        ea.style.transition = 'none'; eb.style.transition = 'none';
+        ea.style.transform = ''; eb.style.transform = '';
+        ca.style.zIndex = '';
+        resolve();
+      }, ms);
+    });
+  }
+
+  /** Dim every orb except the one being held, so the eye has one thing to follow. */
+  function setFocus(on) {
+    const board = cellEls.length ? cellEls[0].parentElement : null;
+    if (board) board.classList.toggle('focus-mode', !!on);
   }
 
   /** Slide orbs down from where they came so a cascade wave reads as gravity. */
@@ -2994,8 +3617,51 @@ const Render = (function () {
 
   return {
     SPRITE, ORB_DEFS, buildSprite, buildGrid, paintCell, paintAll, renderCounts, orbMarkup, cellEls,
-    attachOverlay, drawPath, clearPath, setCursor, markClearing, clearMarks, animateDrops, resetTransforms
+    attachOverlay, drawPath, clearPath, setCursor, markClearing, clearMarks, animateDrops, resetTransforms,
+    glideSwap, setFocus
   };
+})();
+</script>
+
+<!-- ================================================================
+     store - localStorage persistence (A14). Everything is optional: the
+     app must keep working when storage is unavailable or full, which is
+     the normal state in private browsing and for some file:// setups.
+     ================================================================ -->
+<script id="store-src">
+const Store = (function () {
+  'use strict';
+  const KEY = 'pad-solver.v1';
+
+  /* Probe once. Private mode can expose localStorage but throw on write. */
+  const ok = (function () {
+    try {
+      const k = '__pad_probe';
+      localStorage.setItem(k, '1');
+      localStorage.removeItem(k);
+      return true;
+    } catch (e) { return false; }
+  })();
+
+  function save(data) {
+    if (!ok) return false;
+    try { localStorage.setItem(KEY, JSON.stringify(data)); return true; }
+    catch (e) { return false; }              // quota, or storage disabled mid-session
+  }
+
+  function load() {
+    if (!ok) return null;
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      return (data && data.v === 1) ? data : null;   // ignore anything we cannot read
+    } catch (e) { return null; }
+  }
+
+  function clear() { try { localStorage.removeItem(KEY); } catch (e) {} }
+
+  return { save: save, load: load, clear: clear, available: ok };
 })();
 </script>
 
@@ -3025,6 +3691,7 @@ const Render = (function () {
     lastSettings: null,
     preview: null,             // board shown during playback; null = the real board
     play: null,                // playback state
+    practice: null,            // practice-mode drag state
     timer: null
   };
 
@@ -3046,6 +3713,7 @@ const Render = (function () {
       state.paintType = +b.dataset.type;
       setBrush('orb');
       syncPalette();
+      persist();
     });
     syncPalette();
   }
@@ -3111,21 +3779,33 @@ const Render = (function () {
     const cell = e.target.closest('.cell');
     if (!cell) return;
     e.preventDefault();
+    try { boardEl.setPointerCapture(e.pointerId); } catch (_) {}
+    /* In practice mode the same gesture means "pick this orb up", not "paint". */
+    if (practiceOn()) { practiceGrab(+cell.dataset.i); return; }
     /* Editing the board retires whatever solution is on screen. */
     invalidateSolution();
     painting = true; lastIndex = -1; flagValue = null;
-    try { boardEl.setPointerCapture(e.pointerId); } catch (_) {}
     applyPaint(+cell.dataset.i);
   });
 
   boardEl.addEventListener('pointermove', e => {
-    if (!painting) return;
     /* With pointer capture every move retargets to the board, so hit-test manually. */
+    if (practiceOn()) {
+      if (state.practice.holding < 0) return;
+      const j = cellIndexAt(e.clientX, e.clientY);
+      if (j >= 0) practiceMove(j);
+      return;
+    }
+    if (!painting) return;
     const i = cellIndexAt(e.clientX, e.clientY);
     if (i >= 0) applyPaint(i);
   });
 
-  const endPaint = () => { painting = false; lastIndex = -1; flagValue = null; };
+  const endPaint = () => {
+    if (practiceOn()) practiceRelease();
+    if (painting) { syncBoardString(); persist(); }
+    painting = false; lastIndex = -1; flagValue = null;
+  };
   boardEl.addEventListener('pointerup', endPaint);
   boardEl.addEventListener('pointercancel', endPaint);
   window.addEventListener('blur', endPaint);
@@ -3206,7 +3886,11 @@ const Render = (function () {
     skyfallSamples: 'How many random refills to simulate when estimating what skyfall might add. Costs a little time and only runs on the final handful of candidates. Set 0 to skip it.',
     diagonal: 'Allow the drag to move diagonally. Legal in game but much harder to execute cleanly, so it is off by default.',
     noSkyfall: 'Leave this on. It ranks solutions only on combos the board is guaranteed to make, so you never get recommended a board that only looks good if lucky orbs happen to drop in.',
-    results: 'Each option is a different trade between a better board and a shorter path. Tap one to draw it on the board. "Max score" ignores length; "Shortest path" is usually the one to actually play.'
+    results: 'Each option is a different trade between a better board and a shorter path. Tap one to draw it on the board. "Max score" ignores length; "Shortest path" is usually the one to actually play.',
+    practice: 'Hides the path and lets you drag it yourself from memory, then marks you. It checks the BOARD you built rather than your exact route, because a different drag reaching the same arrangement is worth just as much in game.',
+    pathGuide: 'The drag broken into numbered moves, colour-matched to the board. Repeated shapes collapse (a loop walked twice shows as x2) and each move names what it is - a loop, a staircase, a straight run. Tap one to spotlight it.',
+    boardText: 'The board as text: one letter per cell, left to right then top to bottom. R fire, B water, G wood, L light, D dark, H heart, J jammer, P poison, M mortal poison, o empty. Copy it to save or share a board, paste one in and press Import to load it. If any orb is enhanced or locked, a /tail is added carrying those marks.',
+    dawnglare: 'Opens the same board in pad.dawnglare.com, the community simulator, so you can sanity-check it against a tool other people already trust. Mortal poison and empty cells have no equivalent there and are noted when they change.'
   };
 
   const infoBtn = key =>
@@ -3616,8 +4300,12 @@ const Render = (function () {
     document.querySelectorAll('.result').forEach(el =>
       el.setAttribute('aria-pressed', String(+el.dataset.i === i)));
     const applied = Engine.applyPath(state.board, r.start, r.steps);
+    /* Break the drag into memorable phases before anything is drawn - both the
+       board overlay and the written guide are keyed off the same analysis. */
+    const analysis = PathGuide.analyze(state.board, r.start, r.steps);
     state.play = {
-      result: r, visited: applied.visited, step: 0, speed: state.play ? state.play.speed : 1,
+      result: r, visited: applied.visited, analysis: analysis, focus: -1,
+      step: 0, speed: state.play ? state.play.speed : 1,
       playing: false, resolving: false
     };
     $('#playback').hidden = false;
@@ -3625,9 +4313,65 @@ const Render = (function () {
       r.combos + ' combos · score ' + r.score.toFixed(1);
     $('#pbSlider').max = r.steps.length;
     $('#pbNote').textContent = '';
+    renderPathGuide(analysis);
     setStep(0);
-    Render.drawPath(applied.visited);
+    redrawPath();
   }
+
+  /* ---------- step-by-step guide (A13) --------------------------------- */
+
+  /** Redraw the overlay, keeping the phase colouring and any spotlight. */
+  function redrawPath(focus) {
+    const play = state.play;
+    if (!play || !play.analysis) return;
+    if (focus !== undefined) play.focus = focus;
+    Render.drawPath(play.visited, { phases: play.analysis.phases, focus: play.focus });
+  }
+
+  function renderPathGuide(a) {
+    $('#pdCount').textContent = ' · ' + a.phases.length +
+      (a.phases.length === 1 ? ' move' : ' moves') + ', ' + a.totalSteps + ' steps';
+    $('#pgSummary').textContent = a.summary;
+    $('#pgShorthand').textContent = a.shorthand;
+    $('#phaseList').innerHTML = a.phases.map(p =>
+      '<button type="button" class="phase" data-i="' + p.index + '" aria-pressed="false">' +
+        '<span class="badge" style="background:' + p.color + '">' + p.index + '</span>' +
+        '<span class="p-body">' +
+          '<span class="p-label">' + esc(p.label) + '</span>' +
+          '<span class="p-arrows">' + esc(p.shorthand) + '</span>' +
+          '<span class="p-meta">' + p.stepCount + (p.stepCount === 1 ? ' step' : ' steps') +
+            ' · ' + p.fromCell + ' \u2192 ' + p.toCell + '</span>' +
+        '</span>' +
+      '</button>').join('');
+  }
+
+  const esc = s => String(s).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+
+  /** Mark which phase the playhead is inside, so scrubbing stays oriented. */
+  function markCurrentPhase(step) {
+    const play = state.play;
+    if (!play || !play.analysis) return;
+    const cur = play.analysis.phases.find(p => step > p.from && step <= p.to);
+    document.querySelectorAll('.phase').forEach(el =>
+      el.setAttribute('data-current', cur && +el.dataset.i === cur.index ? '1' : '0'));
+  }
+
+  $('#phaseList').addEventListener('click', e => {
+    const btn = e.target.closest('.phase');
+    const play = state.play;
+    if (!btn || !play) return;
+    const idx = +btn.dataset.i;
+    const phase = play.analysis.phases.find(p => p.index === idx);
+    if (!phase) return;
+    const already = btn.getAttribute('aria-pressed') === 'true';
+    document.querySelectorAll('.phase').forEach(el =>
+      el.setAttribute('aria-pressed', String(!already && el === btn)));
+    play.playing = false;
+    $('#pbPlay').innerHTML = '&#9654;';
+    /* Show the board as it looks going INTO this move, then spotlight it. */
+    setStep(phase.from);
+    redrawPath(already ? -1 : idx);
+  });
 
   function clearSolution() {
     state.results = [];
@@ -3636,10 +4380,13 @@ const Render = (function () {
     $('#resultsList').innerHTML = '';
     Render.clearPath();
     $('#playback').hidden = true;
+    $('#pathDetails').open = false;
+    $('#phaseList').innerHTML = '';
   }
 
   /** Any board or profile edit makes the current solution stale. */
   function invalidateSolution() {
+    persist();
     if (state.results.length || state.preview) {
       stopPlayback();
       clearSolution();
@@ -3668,6 +4415,7 @@ const Render = (function () {
     Render.setCursor(play.visited[play.step]);
     $('#pbSlider').value = play.step;
     $('#pbStep').textContent = play.step + '/' + play.result.steps.length;
+    markCurrentPhase(play.step);
   }
 
   function stopPlayback() {
@@ -3679,6 +4427,8 @@ const Render = (function () {
     Render.clearMarks();
     Render.resetTransforms();
     Render.setCursor(-1);
+    Render.setFocus(false);
+    exitPractice(true);
     renderBoard();
   }
 
@@ -3692,7 +4442,21 @@ const Render = (function () {
     tick();
   }
 
-  function tick() {
+  /**
+   * One step of playback. The orbs GLIDE past each other rather than snapping,
+   * which is what makes a long drag followable - the eye can track a moving
+   * thing but not a sequence of teleports.
+   */
+  async function advanceStep() {
+    const play = state.play;
+    const from = play.visited[play.step], to = play.visited[play.step + 1];
+    if (from == null || to == null) return;
+    Render.setFocus(true);
+    await Render.glideSwap(from, to, state.board.w, Math.max(70, 210 / play.speed));
+    setStep(play.step + 1);
+  }
+
+  async function tick() {
     const play = state.play;
     if (!play || !play.playing) return;
     if (play.step >= play.result.steps.length) {
@@ -3701,8 +4465,9 @@ const Render = (function () {
       playResolution();
       return;
     }
-    setStep(play.step + 1);
-    state.timer = setTimeout(tick, 260 / play.speed);
+    await advanceStep();
+    if (!state.play || !state.play.playing) return;
+    state.timer = setTimeout(tick, Math.max(20, 70 / play.speed));
   }
 
   /**
@@ -3723,6 +4488,7 @@ const Render = (function () {
 
     state.preview = b;
     Render.setCursor(-1);
+    Render.setFocus(false);          // every orb matters once they start clearing
     renderBoard();
 
     while (play.resolving) {
@@ -3756,6 +4522,147 @@ const Render = (function () {
         ? ' · ~' + r.expected.combos.toFixed(1) + ' combos expected once skyfall lands' : '');
   }
 
+  /* ====================================================================
+     PRACTICE MODE
+     Hide the path, let the player drag it themselves, then say whether the
+     board they produced matches the one the solver was aiming for. Judging
+     the BOARD rather than the exact route is deliberate: a different drag
+     that arranges the orbs the same way is just as good a play.
+     ==================================================================== */
+
+  function practiceOn() { return state.practice && state.practice.on; }
+
+  function startPractice() {
+    const play = state.play;
+    if (!play) return;
+    play.playing = false;
+    play.resolving = false;
+    $('#pbPlay').innerHTML = '&#9654;';
+    const target = Engine.applyPath(state.board, play.result.start, play.result.steps).board;
+    state.practice = {
+      on: true, holding: -1, start: -1, steps: [], t0: 0,
+      target: target,
+      allowDiagonal: play.result.steps.some(d => d >= 4)
+    };
+    Render.clearPath();
+    Render.setFocus(false);
+    Render.setCursor(-1);
+    state.preview = Engine.cloneBoard(state.board);
+    renderBoard();
+    $('#practiceBar').hidden = false;
+    $('#practiceBar').className = 'practice on';
+    $('#pbPractice').setAttribute('aria-pressed', 'true');
+    setPracticeNote('Path hidden. <b>Drag one orb</b> across the board from memory, then let go.');
+    $('#pbNote').textContent = '';
+  }
+
+  function setPracticeNote(html) { $('#prNote').innerHTML = html; }
+
+  function exitPractice(silent) {
+    if (!practiceOn()) return;
+    state.practice.on = false;
+    $('#practiceBar').hidden = true;
+    $('#pbPractice').setAttribute('aria-pressed', 'false');
+    Render.setFocus(false);
+    Render.setCursor(-1);
+    if (!silent) {
+      state.preview = null;
+      renderBoard();
+      if (state.play) { setStep(0); redrawPath(-1); }
+    }
+  }
+
+  /** Pick an orb up. */
+  function practiceGrab(i) {
+    const p = state.practice;
+    p.holding = i;
+    p.start = i;
+    p.steps = [];
+    p.t0 = performance.now();
+    state.preview = Engine.cloneBoard(state.board);
+    renderBoard();
+    Render.setFocus(true);
+    Render.setCursor(i);
+    $('#practiceBar').className = 'practice on';
+    setPracticeNote('Holding <b>' + PathGuide.cellName(state.board, i) + '</b> — drag, then release.');
+  }
+
+  /** Drag onto a neighbouring cell: swap, exactly like the game does. */
+  function practiceMove(j) {
+    const p = state.practice;
+    if (p.holding < 0 || j === p.holding) return;
+    const d = Engine.dirBetween(state.board, p.holding, j);
+    if (d < 0) return;                                   // not a neighbour
+    if (d >= 4 && !p.allowDiagonal) return;              // diagonals off
+    Engine.applySwap(state.preview, p.holding, j);
+    p.steps.push(d);
+    Render.paintCell(state.preview, p.holding);
+    Render.paintCell(state.preview, j);
+    Render.renderCounts(countsEl, state.preview);
+    p.holding = j;
+    Render.setCursor(j);
+    $('#prNote').innerHTML = 'Holding <b>' + PathGuide.cellName(state.board, j) + '</b> — ' +
+      p.steps.length + (p.steps.length === 1 ? ' step' : ' steps') + ' so far.';
+  }
+
+  /** Let go and mark it. */
+  function practiceRelease() {
+    const p = state.practice, play = state.play;
+    if (!p.on || p.holding < 0) return;
+    const steps = p.steps.length;
+    p.holding = -1;
+    Render.setFocus(false);
+    Render.setCursor(-1);
+    if (!steps) { setPracticeNote('Nothing moved — <b>drag</b> an orb across the board, then let go.'); return; }
+
+    const mine = Engine.encodeBoard(state.preview);
+    const goal = Engine.encodeBoard(p.target);
+    const secs = ((performance.now() - p.t0) / 1000).toFixed(1);
+    const exact = p.start === play.result.start && p.steps.join(',') === play.result.steps.join(',');
+
+    if (mine === goal) {
+      $('#practiceBar').className = 'practice win';
+      const feat = Engine.evaluateBoard(state.preview);
+      setPracticeNote('<span class="pr-verdict">Correct</span> — you built the target board in <b>' +
+        steps + '</b> ' + (steps === 1 ? 'step' : 'steps') + ' (' + secs + 's). ' +
+        feat.combos + ' combos. ' +
+        (exact ? 'Move for move, the same path.'
+               : 'A different route to the same board, which counts just the same.'));
+    } else {
+      /* Count how far off it is, so the feedback is actionable. */
+      let wrong = 0;
+      for (let i = 0; i < mine.length; i++) if (mine[i] !== goal[i]) wrong++;
+      const feat = Engine.evaluateBoard(state.preview);
+      $('#practiceBar').className = 'practice miss';
+      setPracticeNote('<span class="pr-verdict">Not quite</span> — <b>' + wrong +
+        '</b> orbs sit somewhere other than the target, after ' + steps +
+        (steps === 1 ? ' step' : ' steps') + ' (' + secs + 's). Your board still makes <b>' +
+        feat.combos + '</b> combo' + (feat.combos === 1 ? '' : 's') +
+        ' vs the target\u2019s <b>' + play.result.combos + '</b>. Try again, or show the path to compare.');
+    }
+  }
+
+  $('#pbPractice').addEventListener('click', () => {
+    if (practiceOn()) exitPractice(false); else startPractice();
+  });
+  $('#prRetry').addEventListener('click', () => {
+    if (!practiceOn()) return;
+    state.practice.steps = [];
+    state.practice.holding = -1;
+    state.preview = Engine.cloneBoard(state.board);
+    Render.setCursor(-1);
+    Render.setFocus(false);
+    renderBoard();
+    $('#practiceBar').className = 'practice on';
+    setPracticeNote('Board reset. <b>Drag one orb</b> from memory, then let go.');
+  });
+  $('#prReveal').addEventListener('click', () => {
+    if (!state.play) return;
+    redrawPath(-1);
+    setPracticeNote('Path shown. Compare it with your attempt, then press <b>Try again</b>.');
+  });
+  $('#prExit').addEventListener('click', () => exitPractice(false));
+
   $('#pbPlay').addEventListener('click', togglePlay);
   $('#pbSlider').addEventListener('input', e => {
     const play = state.play;
@@ -3765,7 +4672,8 @@ const Render = (function () {
     $('#pbPlay').innerHTML = '&#9654;';
     Render.clearMarks();
     setStep(+e.target.value);
-    if (play.visited) Render.drawPath(play.visited);
+    document.querySelectorAll('.phase').forEach(el => el.setAttribute('aria-pressed', 'false'));
+    redrawPath(-1);
   });
   $('#pbSpeed').addEventListener('click', e => {
     const b = e.target.closest('button');
@@ -3790,8 +4698,191 @@ const Render = (function () {
     Render.clearPath();
   });
 
+  $('#solveSettings').addEventListener('change', persist);
   $('#btnSolve').addEventListener('click', solve);
   $('#btnCancel').addEventListener('click', cancelSolve);
+
+  /* ====================================================================
+     BOARD TEXT IN / OUT (A14)
+     ==================================================================== */
+
+  const boardField = $('#boardString');
+
+  /** Keep the field in step with the board, unless the user is typing in it. */
+  function syncBoardString() {
+    if (document.activeElement !== boardField) {
+      boardField.value = Engine.encodeBoardFull(state.board);
+    }
+    const dg = Engine.toDawnglare(state.board);
+    $('#linkDG').href = dg.url;
+    $('#dgHint').textContent = dg.notes.length
+      ? 'Cross-check on pad.dawnglare.com. Note: ' + dg.notes.join('; ') + '.'
+      : 'Cross-check this exact board on pad.dawnglare.com.';
+  }
+
+  function importBoardString() {
+    const text = boardField.value.trim();
+    const check = Engine.validateBoardString(text, state.board.w, state.board.h);
+    if (!check.ok) {
+      /* A wrong-size paste is the likeliest mistake, so name the size that fits -
+         but only when the length is actually the problem. A string full of
+         unknown letters can still be 30 long, and telling someone to switch
+         board size would send them the wrong way. */
+      const body = text.split('/')[0].replace(/\s+/g, '');
+      const sizeProblem = /needs/.test(check.reason);
+      const fits = sizeProblem ? Engine.SIZES.filter(s => s.w * s.h === body.length) : [];
+      $('#ioHint').textContent = check.reason +
+        (fits.length ? ' That is a ' + fits[0].label + ' board \u2014 switch size first.' : '');
+      $('#ioHint').style.color = 'var(--warn)';
+      return;
+    }
+    invalidateSolution();
+    state.board = Engine.parseBoard(text, state.board.w, state.board.h);
+    redrawAll();
+    $('#ioHint').textContent = 'Imported.';
+    $('#ioHint').style.color = '';
+    persist();
+  }
+
+  /**
+   * navigator.clipboard is not available in every file:// context, so fall
+   * back to the old selection trick before admitting defeat.
+   */
+  function copyText(text, done) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => done('Copied.'), () => legacyCopy(text, done));
+    } else legacyCopy(text, done);
+  }
+  function legacyCopy(text, done) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      const worked = document.execCommand('copy');
+      ta.remove();
+      done(worked ? 'Copied.' : 'Copy blocked \u2014 select the text and copy it manually.');
+    } catch (e) {
+      done('Copy blocked \u2014 select the text and copy it manually.');
+    }
+  }
+
+  $('#btnCopyBoard').addEventListener('click', () =>
+    copyText(Engine.encodeBoardFull(state.board), msg => {
+      $('#ioHint').textContent = msg;
+      $('#ioHint').style.color = '';
+    }));
+  $('#btnImportBoard').addEventListener('click', importBoardString);
+  boardField.addEventListener('keydown', e => { if (e.key === 'Enter') importBoardString(); });
+  $('#btnCopyDG').addEventListener('click', () =>
+    copyText(Engine.toDawnglare(state.board).url, msg => { $('#dgHint').textContent = msg; }));
+
+  /* ====================================================================
+     PERSISTENCE (A14)
+     ==================================================================== */
+
+  const SETTING_IDS = ['setEngine', 'setBeam', 'setTime', 'setNodes', 'setSteps', 'setEps',
+    'setStepPen', 'setDiagPen', 'setPathWeight', 'setSkySamples'];
+  const SETTING_FLAGS = ['setDiagonal', 'setNoSkyfall'];
+
+  function snapshot() {
+    const s = {};
+    SETTING_IDS.forEach(id => { s[id] = $('#' + id).value; });
+    SETTING_FLAGS.forEach(id => { s[id] = $('#' + id).checked; });
+    return {
+      v: 1,
+      board: { w: state.board.w, h: state.board.h, text: Engine.encodeBoardFull(state.board) },
+      profile: state.profile,
+      settings: s,
+      ui: { paintType: state.paintType, brush: state.brush }
+    };
+  }
+
+  let saveTimer = null;
+  /** Debounced, because painting a board fires this on every cell. */
+  function persist() {
+    if (!Store.available) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => Store.save(snapshot()), 250);
+  }
+
+  /** Merge a saved profile onto a fresh one so new fields keep their defaults. */
+  function mergeProfile(saved) {
+    const base = Score.makeProfile();
+    if (!saved || typeof saved !== 'object') return base;
+    /* Copy into a NEW object. Object.assign(base, saved) would mutate base,
+       which means base.colors would already have been replaced by the saved
+       colours before we could read the defaults off it - and every colour the
+       save did not mention would vanish. */
+    const p = Object.assign({}, base, saved);
+    p.colors = {};
+    for (const t of Engine.ATTRIBUTES) {
+      p.colors[t] = Object.assign(Score.makeColorProfile(0), (saved.colors || {})[t] || {});
+    }
+    const freshObj = Score.makeObjectives();
+    p.objectives = {};
+    for (const k of Object.keys(freshObj)) {
+      p.objectives[k] = Object.assign(freshObj[k], (saved.objectives || {})[k] || {});
+    }
+    p.enemy = Object.assign({ attribute: 0, damageVoid: false, damageAbsorb: false }, saved.enemy || {});
+    p.weights = Object.assign({}, Score.CONFIG.weights, saved.weights || {});
+    p.leaders = Array.isArray(saved.leaders) && saved.leaders.length === 2
+      ? saved.leaders.map(l => ({
+          archetype: (l && Score.ARCHETYPES[l.archetype]) ? l.archetype : 'none',
+          params: Object.assign({}, (l && l.params) || {})
+        }))
+      : base.leaders;
+    return p;
+  }
+
+  function restore() {
+    const saved = Store.load();
+    if (!saved) return false;
+    try {
+      if (saved.board && saved.board.text) {
+        const b = Engine.parseBoard(saved.board.text, saved.board.w, saved.board.h);
+        if (b.cells.length === saved.board.w * saved.board.h) state.board = b;
+      }
+      state.profile = mergeProfile(saved.profile);
+      if (saved.settings) {
+        SETTING_IDS.forEach(id => {
+          if (saved.settings[id] != null) $('#' + id).value = saved.settings[id];
+        });
+        SETTING_FLAGS.forEach(id => {
+          if (saved.settings[id] != null) $('#' + id).checked = !!saved.settings[id];
+        });
+      }
+      if (saved.ui) {
+        if (saved.ui.paintType != null) state.paintType = saved.ui.paintType;
+        if (saved.ui.brush) state.brush = saved.ui.brush;
+      }
+      return true;
+    } catch (e) {
+      Store.clear();          // a corrupt save must never brick the app
+      return false;
+    }
+  }
+
+  /* Two-step, so a stray tap cannot wipe a carefully entered board. */
+  let resetArmed = false;
+  $('#btnReset').addEventListener('click', () => {
+    const btn = $('#btnReset');
+    if (!resetArmed) {
+      resetArmed = true;
+      btn.textContent = 'Tap again to erase';
+      btn.style.borderColor = 'var(--warn)';
+      setTimeout(() => {
+        resetArmed = false;
+        btn.textContent = 'Reset saved data';
+        btn.style.borderColor = '';
+      }, 4000);
+      return;
+    }
+    Store.clear();
+    location.reload();
+  });
 
   /* ---------- boot ------------------------------------------------------ */
 
@@ -3806,13 +4897,19 @@ const Render = (function () {
   function redrawAll() {
     state.preview = null;
     renderBoard();
+    syncBoardString();
+    persist();
   }
 
   Render.buildSprite();
   Render.attachOverlay($('#pathOverlay'));
   buildPalette();
-  setBrush('orb');
-  Engine.randomize(state.board);
+
+  /* Pick up where the last session left off; otherwise start on a fresh board. */
+  const restored = restore();
+  if (!restored) Engine.randomize(state.board);
+  setBrush(state.brush || 'orb');
+  syncPalette();
   Render.buildGrid(boardEl, state.board);
   buildTeamPanel();
   buildObjectivePanel();
@@ -3837,10 +4934,22 @@ const Render = (function () {
     }));
 
   redrawAll();
-  setStatus('Ready. Load a preset on the Team tab, then press Solve.');
+  setStatus(restored
+    ? 'Board and team restored from your last session. Press Solve when ready.'
+    : 'Ready. Load a preset on the Team tab, then press Solve.');
+  if (!Store.available) {
+    $('#storeNote').textContent =
+      'Storage is unavailable here, so nothing will be remembered between visits. ' +
+      'Use Copy under Board text to keep a board.';
+  }
 
   /* Handy for console poking and for the self-tests. */
-  window.PAD = { Engine, Render, Score, Solver, state, redrawAll, solve, selectResult, setStep, playResolution };
+  window.PAD = {
+    Engine, Render, Score, Solver, state,
+    redrawAll, solve, selectResult, setStep, playResolution,
+    /* exposed for the self-tests and for console poking */
+    snapshot, mergeProfile, persist, syncBoardString
+  };
 })();
 </script>
 
@@ -4087,6 +5196,72 @@ const Tests = (function () {
     eq('path: displaced orb moves back one step', moved.board.cells[1], E.ORB.DARK);
     eq('path: first swap partner landed at the start', moved.board.cells[0], E.ORB.WATER);
     eq('path: visited cells recorded', moved.visited.join(','), '0,1,4');
+
+    /* Board strings: the documented format, plus the optional state tail. */
+    const plain = fx(`
+      RBGLDH
+      JPMoRB
+      GLDHJP
+      MoRBGL
+      DHJPMo`);
+    eq('encode uses the documented letters', E.encodeBoard(plain).slice(0, 12), 'RBGLDHJPMoRB');
+    eq('plain board needs no flag tail', E.encodeBoardFull(plain).indexOf('/'), -1);
+    eq('board string round-trips',
+      E.encodeBoard(E.parseBoard(E.encodeBoard(plain), 6, 5)), E.encodeBoard(plain));
+
+    const flagged = E.parseBoard(E.encodeBoard(plain), 6, 5);
+    E.setFlag(flagged, 0, E.FLAG.ENHANCED, true);
+    E.setFlag(flagged, 1, E.FLAG.LOCKED, true);
+    E.setFlag(flagged, 2, E.FLAG.ENHANCED, true);
+    E.setFlag(flagged, 2, E.FLAG.LOCKED, true);
+    const full = E.encodeBoardFull(flagged);
+    ok('flagged board gains a tail', full.indexOf('/') === 30, 'tail at ' + full.indexOf('/'));
+    eq('tail encodes enhanced, locked and both', full.slice(31, 34), '+L*');
+    const back = E.parseBoard(full, 6, 5);
+    eq('tail round-trips the orbs', E.encodeBoard(back), E.encodeBoard(plain));
+    ok('tail round-trips enhanced', E.hasFlag(back, 0, E.FLAG.ENHANCED), 'enhanced lost');
+    ok('tail round-trips locked', E.hasFlag(back, 1, E.FLAG.LOCKED), 'locked lost');
+    ok('tail round-trips both', E.hasFlag(back, 2, E.FLAG.ENHANCED) && E.hasFlag(back, 2, E.FLAG.LOCKED), 'both lost');
+    eq('unflagged cells stay clean', back.flags[3], 0);
+
+    /* Validation catches the two mistakes people actually make. */
+    ok('validator accepts a good string', E.validateBoardString(E.encodeBoard(plain), 6, 5).ok, 'rejected');
+    ok('validator rejects a wrong-size string', !E.validateBoardString('RBG', 6, 5).ok, 'accepted');
+    ok('validator rejects an unknown letter',
+      !E.validateBoardString(E.encodeBoard(plain).replace('R', 'Z'), 6, 5).ok, 'accepted');
+    ok('validator names the offending letter',
+      /Z/.test(E.validateBoardString('Z'.repeat(30), 6, 5).reason), 'no letter named');
+
+    /* Dawnglare export: same letters, with the two documented degradations. */
+    const dg = E.toDawnglare(fx(`
+      RBGLDH
+      RBGLDH
+      RBGLDH
+      RBGLDH
+      RBGLDH`));
+    eq('dawnglare passes the six colours straight through', dg.patt.slice(0, 6), 'RBGLDH');
+    eq('dawnglare url carries the board size', dg.url.indexOf('width=6') > 0, true);
+    ok('clean board reports no degradation', dg.notes.length === 0, dg.notes.join());
+    const dgLossy = E.toDawnglare(fx('MoRBGH' + `
+      RBGLDH
+      RBGLDH
+      RBGLDH
+      RBGLDH`));
+    eq('mortal poison degrades to poison', dgLossy.patt[0], 'P');
+    eq('empty degrades to heart', dgLossy.patt[1], 'H');
+    eq('both degradations are reported', dgLossy.notes.length, 2);
+
+    /* dirBetween turns a finger drag into path steps (practice mode). */
+    const nb = E.createBoard(6, 5, 1);
+    eq('dirBetween: right', E.dirBetween(nb, 0, 1), 3);
+    eq('dirBetween: down', E.dirBetween(nb, 0, 6), 1);
+    eq('dirBetween: up', E.dirBetween(nb, 6, 0), 0);
+    eq('dirBetween: left', E.dirBetween(nb, 1, 0), 2);
+    eq('dirBetween: down-right diagonal', E.dirBetween(nb, 0, 7), 7);
+    eq('dirBetween: not a neighbour', E.dirBetween(nb, 0, 14), -1);
+    eq('dirBetween: same cell', E.dirBetween(nb, 3, 3), -1);
+    /* Row wrap must NOT look like a sideways step. */
+    eq('dirBetween: across a row edge is not adjacent', E.dirBetween(nb, 5, 6), -1);
 
     /* Orb state travels with the orb it belongs to. */
     const fb = fx('RBG');
@@ -4402,6 +5577,197 @@ const Tests = (function () {
       const rf = E.evaluateBoard(E.applyPath(poisonBoard, top.start, top.steps).board);
       eq('poison sweep really clears the poison', rf.remaining[E.ORB.POISON], 0);
     }
+  });
+
+  /* ================= path guide (A13) ================================= */
+  suite('Path guide: chunks, loops, figure-8s', function () {
+    const b = E.createBoard(6, 6, E.ORB.FIRE);
+    const A = (start, steps) => PathGuide.analyze(b, start, steps);
+    const labels = a => a.phases.map(p => p.label);
+    /* Direction indices: U=0 D=1 L=2 R=3 */
+
+    const straight = A(0, [3, 3, 3]);
+    eq('straight run is one phase', straight.phases.length, 1);
+    eq('straight run is named by direction', straight.phases[0].label, 'Right 3');
+    eq('straight run shorthand', straight.phases[0].shorthand, '\u21923');
+
+    /* A box walked right-down-left-up is clockwise on screen (rows grow down). */
+    const cw = A(14, [3, 1, 2, 0]);
+    eq('loop is one phase', cw.phases.length, 1);
+    eq('clockwise loop named', cw.phases[0].label, 'Loop clockwise');
+    ok('clockwise loop has positive rotation', cw.phases[0].rotation > 0, cw.phases[0].rotation);
+    const ccw = A(14, [2, 1, 3, 0]);
+    eq('anticlockwise loop named', ccw.phases[0].label, 'Loop anticlockwise');
+    ok('anticlockwise loop has negative rotation', ccw.phases[0].rotation < 0, ccw.phases[0].rotation);
+
+    /* Two touching loops winding opposite ways are a figure-8. */
+    const fig8 = A(14, [3, 1, 2, 0, 2, 1, 3, 0]);
+    eq('figure-8 collapses to one phase', fig8.phases.length, 1);
+    eq('figure-8 is named as one', fig8.phases[0].kind, 'figure8');
+    ok('figure-8 names its crossing cell', /through r\d+c\d+/.test(fig8.phases[0].label), fig8.phases[0].label);
+
+    /* The same loop twice is one instruction, not two. */
+    const twice = A(14, [3, 1, 2, 0, 3, 1, 2, 0]);
+    eq('repeated loop collapses', twice.phases.length, 1);
+    eq('repeated loop counts the repeats', twice.phases[0].repeat, 2);
+    ok('repeated loop shorthand brackets the unit',
+      /^\(.+\) \u00d72$/.test(twice.phases[0].shorthand), twice.phases[0].shorthand);
+
+    /* A weave stays in one piece instead of being chopped by the run cap. */
+    const stair = A(0, [1, 3, 1, 3, 1, 3]);
+    eq('staircase is one phase', stair.phases.length, 1);
+    eq('staircase named', stair.phases[0].label, 'Staircase down/right');
+    eq('staircase keeps all its steps', stair.phases[0].stepCount, 6);
+
+    const zig = A(1, [1, 3, 1, 2, 1, 3, 1, 2]);
+    eq('zigzag is one phase', zig.phases.length, 1);
+    eq('zigzag named', zig.phases[0].label, 'Zigzag down');
+
+    /* Cell naming is 1-based row/column. */
+    eq('start cell name', A(0, [3]).startCell, 'r1c1');
+    eq('end cell name', A(0, [3, 1]).endCell, 'r2c2');
+
+    /**
+     * The invariant everything else rests on: the phases must tile the path
+     * exactly - contiguous, gapless, covering every step once. If this breaks,
+     * the board colouring and the written guide disagree with the real drag.
+     */
+    const rng = Solver.mulberry32(97);
+    let bad = 0, worstPhases = 0;
+    for (let trial = 0; trial < 250; trial++) {
+      const board = E.createBoard(6, 5, 0);
+      E.randomize(board, { rng: rng });
+      const start = (rng() * board.cells.length) | 0;
+      const steps = [];
+      let cur = start;
+      for (let k = 0; k < 30; k++) {
+        const d = (rng() * 4) | 0;
+        if (E.stepTarget(board, cur, d) < 0) continue;
+        cur = E.stepTarget(board, cur, d);
+        steps.push(d);
+      }
+      const a = PathGuide.analyze(board, start, steps);
+      let cursor = 0, stepsCovered = 0;
+      for (const p of a.phases) {
+        if (p.from !== cursor) { bad++; break; }
+        if (p.to <= p.from) { bad++; break; }
+        stepsCovered += p.to - p.from;
+        cursor = p.to;
+      }
+      if (cursor !== steps.length || stepsCovered !== steps.length) bad++;
+      worstPhases = Math.max(worstPhases, a.phases.length);
+    }
+    eq('phases tile every path exactly (250 random drags)', bad, 0);
+    ok('a 30-step drag stays under a dozen phases', worstPhases <= 12, 'worst was ' + worstPhases);
+
+    /* And it survives a path the solver actually produced. */
+    const board = E.createBoard(6, 5, 0);
+    E.randomize(board, { rng: Solver.mulberry32(5150) });
+    const out = Solver.solve({
+      board: board, profile: Score.PRESETS[0].build(),
+      settings: { timeBudget: 300, nodeBudget: 40000, beamWidth: 800, maxSteps: 20 }
+    }, {});
+    const top = out.results[0];
+    const a = PathGuide.analyze(board, top.start, top.steps);
+    eq('solver path: phases cover every step',
+      a.phases.reduce((n, p) => n + (p.to - p.from), 0), top.steps.length);
+    eq('solver path: visited matches the engine replay',
+      a.visited.join(','), E.applyPath(board, top.start, top.steps).visited.join(','));
+    ok('solver path: every phase is labelled', a.phases.every(p => p.label && p.label.length), 'unlabelled phase');
+    ok('solver path: every phase has a colour', a.phases.every(p => /^#/.test(p.color)), 'missing colour');
+  });
+
+  /* ================= persistence (A14) ================================ */
+  suite('Persistence: saved profiles survive upgrades', function () {
+    const S = Score;
+    const merge = window.PAD.mergeProfile;
+
+    /* A save written by an older build is missing whatever we added since.
+       Those fields have to come back as defaults rather than undefined, or
+       the scorer starts reading holes. */
+    const oldSave = {
+      colors: { 1: { weight: 2, tpa: 3 } },          // fire only, and missing vdp/row/l
+      sevenCombo: 2,
+      leaders: [{ archetype: 'combo', params: { min: 6 } }, { archetype: 'nonsense', params: {} }],
+      objectives: { clearPoison: { on: true, hard: true, weight: 40 } }
+    };
+    const p = merge(oldSave);
+    eq('kept the saved weight', p.colors[Engine.ORB.FIRE].weight, 2);
+    eq('kept the saved awakening count', p.colors[Engine.ORB.FIRE].tpa, 3);
+    eq('filled a missing awakening field with 0', p.colors[Engine.ORB.FIRE].vdp, 0);
+    ok('colours absent from the save still exist',
+      p.colors[Engine.ORB.WATER] && p.colors[Engine.ORB.WATER].weight === 0, 'water colour missing');
+    eq('kept the global awakening count', p.sevenCombo, 2);
+    eq('kept a valid leader', p.leaders[0].archetype, 'combo');
+    eq('kept that leader\u2019s params', p.leaders[0].params.min, 6);
+    eq('replaced an unknown leader with none', p.leaders[1].archetype, 'none');
+    eq('kept the saved objective', p.objectives.clearPoison.on, true);
+    ok('objectives missing from the save still exist',
+      p.objectives.minHearts && p.objectives.minHearts.on === false, 'minHearts missing');
+    ok('weights fall back to config defaults',
+      p.weights.combo === S.CONFIG.weights.combo, 'weights not defaulted');
+
+    /* Junk must not throw or produce a half-built profile. */
+    for (const junk of [null, undefined, 'nope', 42, [], { leaders: 'no' }]) {
+      const q = merge(junk);
+      ok('junk save (' + JSON.stringify(junk) + ') yields a usable profile',
+        q && q.colors && q.leaders && q.leaders.length === 2 && q.objectives, 'broken profile');
+    }
+
+    /* And a merged profile still scores without blowing up. */
+    const feat = E.evaluateBoard(fx(`
+      RRRBBB
+      GGGLLL
+      DDDHHH
+      BGDBGD
+      GDBGDB`));
+    ok('merged profile scores a real board', Number.isFinite(S.scoreBoard(feat, p).score), 'not finite');
+
+    /**
+     * Exercise the SHIPPED Store source against a mock localStorage. The page
+     * itself may be on an origin where storage throws (a data: or sandboxed
+     * file:// context), so this is the only way to prove the real code path.
+     */
+    const storeSrc = document.getElementById('store-src').textContent;
+    const makeStore = backing => new Function('localStorage', storeSrc + '\n;return Store;')(backing);
+    const mock = () => ({
+      data: {},
+      setItem: function (k, v) { this.data[k] = String(v); },
+      getItem: function (k) { return Object.prototype.hasOwnProperty.call(this.data, k) ? this.data[k] : null; },
+      removeItem: function (k) { delete this.data[k]; }
+    });
+
+    const backing = mock();
+    const S1 = makeStore(backing);
+    ok('store reports itself available', S1.available, 'not available');
+    eq('nothing saved yet reads as null', S1.load(), null);
+    ok('save returns true', S1.save({ v: 1, hello: 'world' }), 'save failed');
+    eq('load returns what was saved', S1.load().hello, 'world');
+    eq('save uses a single namespaced key', Object.keys(backing.data).join(), 'pad-solver.v1');
+    S1.clear();
+    eq('clear removes it', S1.load(), null);
+
+    /* A save from a future/unknown version must be ignored, not half-read. */
+    backing.data['pad-solver.v1'] = JSON.stringify({ v: 99, board: {} });
+    eq('unknown version is ignored', S1.load(), null);
+    backing.data['pad-solver.v1'] = '{not json';
+    eq('corrupt json is ignored', S1.load(), null);
+
+    /* Storage that throws on write (private browsing) must degrade quietly. */
+    const hostile = mock();
+    hostile.setItem = function () { throw new Error('QuotaExceededError'); };
+    const S2 = makeStore(hostile);
+    ok('hostile storage reports unavailable', !S2.available, 'claimed available');
+    eq('save is a no-op there', S2.save({ v: 1 }), false);
+    eq('load is a no-op there', S2.load(), null);
+
+    /* The snapshot must be JSON-round-trippable, or nothing can be saved. */
+    const snap = window.PAD.snapshot();
+    const clone = JSON.parse(JSON.stringify(snap));
+    eq('snapshot survives JSON', clone.board.text, snap.board.text);
+    eq('snapshot carries the board size', clone.board.w * clone.board.h, snap.board.text.split('/')[0].length);
+    ok('snapshot carries settings', clone.settings && clone.settings.setBeam != null, 'no settings');
+    ok('snapshot is versioned', clone.v === 1, 'no version');
   });
 
   /* ---------- runner + report ----------------------------------------- */
