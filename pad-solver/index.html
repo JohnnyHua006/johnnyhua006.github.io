@@ -176,11 +176,22 @@ button{font:inherit;color:inherit;touch-action:manipulation}
 .playback{margin:12px -2px 0;padding:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px}
 .pb-title{font-size:12.5px;color:var(--muted);margin:0 0 8px}
 .pb-title b{color:var(--text)}
-.pb-row{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+/* Wrap rather than run off the edge: on a narrow phone the speed segment and
+   the three action buttons cannot share one line, so the actions drop to their
+   own line and split the width evenly instead of overflowing the card. */
+.pb-row{display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap}
 .pb-row:last-of-type{margin-bottom:0}
-.pb-play{min-width:56px;justify-content:center;font-size:17px}
-.playback .seg button{min-height:40px;padding:0 15px}
-.pb-step{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;min-width:52px;text-align:right}
+.pb-play{flex:0 0 auto;min-width:56px;justify-content:center;font-size:17px}
+/* The 240px basis is the wrap decision: the actions ride alongside the speed
+   control when that much room exists, and drop to their own full-width line
+   when it does not, instead of being squeezed or pushed off screen. */
+.pb-actions{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 240px;min-width:0}
+/* 84px basis: buttons keep a readable width and wrap onto another line rather
+   than shrinking into unlabelled stubs. */
+.pb-actions .btn{flex:1 1 84px;min-width:0;justify-content:center;padding:0 8px}
+.playback .seg{flex:0 0 auto}
+.playback .seg button{min-height:40px;padding:0 13px}
+.pb-step{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;min-width:44px;text-align:right}
 .pb-note{color:var(--muted);font-size:12px;margin-top:8px;min-height:1.2em}
 
 /* ---------- step-by-step path guide ---------- */
@@ -241,20 +252,29 @@ a.btn{text-decoration:none;justify-content:center}
 }
 .num{width:74px;text-align:center;padding:0 4px}
 .grow{flex:1 1 auto}
-.field-row{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:0 0 8px}
+.field-row{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:0 0 8px;flex-wrap:wrap}
 .field-row label{font-size:13.5px;color:var(--muted)}
+/* A <select> is as wide as its longest option unless told otherwise, which is
+   how the engine picker used to push the Solve tab off a 375px screen. */
+.field-row .sel{flex:1 1 auto;min-width:0;max-width:100%}
+.obj-extra .sel{max-width:100%}
 .chk{display:inline-flex;align-items:center;gap:8px;min-height:var(--tap);font-size:13.5px;color:var(--text)}
 .chk input{width:20px;height:20px;accent-color:var(--accent)}
+/* minmax(44px,...) gave the five number columns a floor they could not go
+   below, so the row ran off the card on a 320px phone. minmax(0,1fr) lets them
+   share whatever space there is instead. */
 .grid-head,.color-row{
-  display:grid;grid-template-columns:minmax(58px,1fr) repeat(5,minmax(44px,1fr));
-  gap:6px;align-items:center;
+  display:grid;grid-template-columns:minmax(46px,1.1fr) repeat(5,minmax(0,1fr));
+  gap:5px;align-items:center;
 }
 .grid-head{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
 .grid-head span:not(:first-child),.color-row .num{text-align:center}
 .color-row{margin-bottom:6px}
-.color-row .num{width:100%;padding:0}
-.color-name{display:flex;align-items:center;gap:6px;font-size:12.5px}
+.color-row .num{width:100%;min-width:0;padding:0}
+.color-name{display:flex;align-items:center;gap:6px;font-size:12.5px;min-width:0}
 .color-name svg{width:24px;height:24px;flex:0 0 auto}
+/* The orb itself identifies the colour, so the name may truncate when tight. */
+.color-name b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .leader-slot{border:1px solid var(--line-soft);border-radius:10px;padding:10px;margin:0 0 10px}
 .leader-slot > .field-row:last-child{margin-bottom:0}
 .leader-title{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 8px}
@@ -262,6 +282,34 @@ a.btn{text-decoration:none;justify-content:center}
 .obj-row .field-row{margin:0}
 .obj-extra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .obj-extra .mini{font-size:12px;color:var(--muted)}
+/* one requirement per row: count / shape / colour / required, then remove */
+/* Phone layout is two lines - [count][shape] over [colour][required] - so a
+   requirement stays one glanceable block instead of a 144px stack. */
+.shape-req{
+  display:grid;gap:6px;align-items:center;margin:0 0 8px;
+  grid-template-columns:52px minmax(0,1fr) minmax(0,1fr) 40px;
+}
+.shape-req .num{width:100%;min-width:0}
+.shape-req .sel{min-width:0;width:100%;font-size:13px;padding:0 8px}
+.shape-req [data-k="count"]{grid-column:1;grid-row:1}
+.shape-req [data-k="shape"]{grid-column:2 / span 2;grid-row:1}
+.shape-req [data-k="color"]{grid-column:1 / span 2;grid-row:2}
+.shape-req [data-k="hard"]{grid-column:3;grid-row:2}
+.shape-req .req-x{
+  grid-row:1 / span 2;grid-column:4;align-self:stretch;
+  background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+  color:var(--muted);font-size:20px;line-height:1;cursor:pointer;min-height:var(--tap);
+}
+.shape-req .req-x:hover{border-color:#c9534f;color:#ff9b9b}
+@media (min-width:560px){
+  .shape-req{grid-template-columns:56px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 40px}
+  .shape-req [data-k="count"]{grid-column:1;grid-row:1}
+  .shape-req [data-k="shape"]{grid-column:2;grid-row:1}
+  .shape-req [data-k="color"]{grid-column:3;grid-row:1}
+  .shape-req [data-k="hard"]{grid-column:4;grid-row:1}
+  .shape-req .req-x{grid-row:1;grid-column:5}
+}
+#btnAddShape{width:100%;justify-content:center}
 .color-toggle{display:flex;gap:5px;flex-wrap:wrap}
 .color-toggle button{
   width:38px;height:38px;padding:2px;border-radius:9px;background:var(--panel-2);
@@ -352,6 +400,13 @@ a.btn{text-decoration:none;justify-content:center}
 .r-tags span.good{color:#8fe6a8;border-color:#2f5b3d}
 .r-tags span.bad{color:#ff9b9b;border-color:#63313a}
 
+.board-hint{
+  margin:8px 0 0;text-align:center;font-size:12.5px;color:var(--warn);
+  min-height:1.1em;opacity:0;transition:opacity .18s;
+}
+.board-hint.on{opacity:1}
+/* When the board is not editable the cells should not pretend to be. */
+.board.locked .cell{cursor:default}
 .counts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 0}
 .count{
   display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 4px;
@@ -444,6 +499,7 @@ details.about p{margin:8px 0}
       <svg class="path-overlay" id="pathOverlay" aria-hidden="true"></svg>
     </div>
     <div class="counts" id="counts" aria-live="polite"></div>
+    <p class="board-hint" id="boardHint" aria-live="polite"></p>
 
     <!-- step-through playback (A13) -->
     <div class="playback" id="playback" hidden>
@@ -459,9 +515,13 @@ details.about p{margin:8px 0}
           <button type="button" data-s="1" aria-pressed="true">1&times;</button>
           <button type="button" data-s="2" aria-pressed="false">2&times;</button>
         </div>
-        <button type="button" class="btn" id="pbResolve">Resolve</button>
-        <button type="button" class="btn" id="pbPractice" aria-pressed="false" title="Hide the path and drag it yourself from memory, then get marked on it.">Practice</button>
-        <button type="button" class="btn" id="pbExit">Exit</button>
+        <div class="pb-actions">
+          <button type="button" class="btn" id="pbRewind" title="Put the board back exactly as it was before playing, keeping this solution selected.">Rewind</button>
+          <button type="button" class="btn" id="pbPath" aria-pressed="true" title="Hide or show the drawn path.">Hide path</button>
+          <button type="button" class="btn" id="pbResolve">Resolve</button>
+          <button type="button" class="btn" id="pbPractice" aria-pressed="false" title="Hide the path and drag it yourself from memory, then get marked on it.">Practice</button>
+          <button type="button" class="btn" id="pbExit">Exit</button>
+        </div>
       </div>
 
       <!-- practice mode: drag it yourself and find out if you got it right -->
@@ -627,7 +687,7 @@ details.about p{margin:8px 0}
             <label for="setEngine">Engine</label>
             <select id="setEngine" class="sel">
               <option value="beam">Beam (best-first)</option>
-              <option value="idb">Iterative deepening + branch &amp; bound</option>
+              <option value="idb">Iterative deepening (short paths)</option>
             </select>
           </div>
           <div class="field-row"><label for="setBeam">Beam width</label>
@@ -729,6 +789,14 @@ details.about p{margin:8px 0}
             <p><b>Required</b> means a solution that misses it is thrown out, no matter how much
               damage it does. Use it for things you truly must do this turn — sweep the poison,
               trigger a cleanse, hit a combo shield.</p>
+            <p><b>Required matches</b> is the one to reach for when your team needs specific
+              shapes. Add a row per shape — say <i>1× TPA light</i> and <i>1× TPA water</i> — and
+              every solution offered will make all of them, with combos and damage maximised on top.
+              Each row is judged on its own, so a board that manages one of the two still ranks above
+              a board that manages neither; that is what lets the search work toward them instead of
+              stumbling onto them. Expect to trade a little: on a test board, forcing those two TPAs
+              cost one combo versus letting the solver run free — which it would not have made at
+              all on its own.</p>
             <p><b>Bonus</b> means the solver prefers it but will trade it away for a better board.</p>
             <p>If every option comes back with a red ✗ on a Required objective, it could not find any
               way to do it — try a longer time budget, more max steps, or allowing diagonals.</p>
@@ -769,6 +837,12 @@ details.about p{margin:8px 0}
               down/right</code>. Repeated shapes are collapsed, so a loop walked twice reads as
               <code>&#215;2</code> rather than eight separate arrows. Tap any move to spotlight just
               that piece on the board and jump playback to it.</p>
+            <p><b>Rewind</b> puts the board back exactly as it was before you pressed play, keeping
+              the solution selected, so you can study the starting board and the path together after
+              watching it resolve. <b>Hide path</b> clears the drawing without giving up the
+              solution &mdash; useful for reading the board on its own, or testing yourself before
+              opening Practice. The board can only be edited while the <b>Edit</b> tab is open, so
+              tapping it while reviewing a result will never repaint an orb.</p>
             <p><b>&#9654;</b> plays the drag. The held orb <b>glides</b> into place and the orb it
               passes glides back the other way, exactly as they do in game, and every other orb fades
               back so there is only one thing to follow. Drag the slider to scrub.
@@ -1685,7 +1759,11 @@ const Score = (function () {
       minHearts:      { on: false, hard: false, n: 4, weight: 25 },
       minCombos:      { on: false, hard: true,  n: 7, weight: 20 },
       requiredColors: { on: false, hard: true,  colors: [], weight: 20 },
-      requireShape:   { on: false, hard: false, shape: 'vdp', color: 0, weight: 30 }
+      /* A list, not a single shape: "1 TPA of light AND 1 TPA of water" is a
+         normal thing to need, and each entry is judged on its own so meeting
+         one of two still scores better than meeting neither - which is what
+         gives the search something to climb toward. */
+      shapes:         { on: false, list: [] }
     };
   }
 
@@ -1875,6 +1953,14 @@ const Score = (function () {
      ================================================================== */
 
   const SHAPE_SLOT = { tpa: CF.TPA, vdp: CF.VDP, l: CF.L, cross: CF.CROSS, row: CF.ROWS, column: CF.COLS };
+  const SHAPE_NAME = { tpa: 'TPA', vdp: 'VDP', l: 'L', cross: 'cross', row: 'row', column: 'column' };
+
+  /** "2x TPA L" - short enough to sit on a result card as a pass/fail tag. */
+  function shapeLabel(req) {
+    const n = Math.max(1, req.count || 1);
+    return n + '\u00d7 ' + (SHAPE_NAME[req.shape] || req.shape) +
+      (req.color ? ' ' + E.ORB_CHAR[req.color] : '');
+  }
 
   function evaluateObjectives(features, obj) {
     const out = [];
@@ -1903,13 +1989,17 @@ const Score = (function () {
     if (o5) push('requiredColors', 'Match ' + (o5.colors || []).map(t => E.ORB_CHAR[t]).join('') , o5.on,
       (o5.colors || []).every(t => colStat(features, t, CF.COMBOS) > 0), o5);
 
-    const o6 = obj.requireShape;
-    if (o6) {
-      const slot = SHAPE_SLOT[o6.shape];
-      const n = o6.color ? colStat(features, o6.color, slot)
-                         : sumShape(features, null, slot) + colStat(features, ORB.HEART, slot);
-      push('requireShape', 'Make a ' + o6.shape.toUpperCase() +
-        (o6.color ? ' (' + E.ORB_CHAR[o6.color] + ')' : ''), o6.on, n > 0, o6);
+    const o6 = obj.shapes;
+    if (o6 && o6.on && Array.isArray(o6.list)) {
+      o6.list.forEach((req, i) => {
+        const slot = SHAPE_SLOT[req.shape];
+        if (slot === undefined) return;
+        const have = req.color ? colStat(features, req.color, slot)
+                               : sumShape(features, null, slot) + colStat(features, ORB.HEART, slot);
+        const need = Math.max(1, req.count || 1);
+        push('shape' + i, shapeLabel(req), true, have >= need,
+          { hard: req.hard !== false, weight: req.weight || 30 });
+      });
     }
     return out;
   }
@@ -2058,7 +2148,7 @@ const Score = (function () {
         { archetype: 'connected', params: leaderParams('connected', { min: 5, mult: 3.5, colors: [ORB.DARK] }) },
         { archetype: 'flat', params: leaderParams('flat', { mult: 3 }) }
       ];
-      p.objectives.requireShape = { on: true, hard: true, shape: 'vdp', color: ORB.DARK, weight: 40 };
+      p.objectives.shapes = { on: true, list: [{ shape: 'vdp', color: ORB.DARK, count: 1, hard: true, weight: 40 }] };
       return p;
     }),
     preset('Heart cross (Kaede / Myr)',
@@ -2071,7 +2161,7 @@ const Score = (function () {
         { archetype: 'heartCross', params: leaderParams('heartCross', { mult: 4 }) },
         { archetype: 'heartCross', params: leaderParams('heartCross', { mult: 4 }) }
       ];
-      p.objectives.requireShape = { on: true, hard: true, shape: 'cross', color: ORB.HEART, weight: 40 };
+      p.objectives.shapes = { on: true, list: [{ shape: 'cross', color: ORB.HEART, count: 1, hard: true, weight: 40 }] };
       return p;
     }),
     preset('Cleanse + poison sweep',
@@ -2088,7 +2178,7 @@ const Score = (function () {
   return {
     CONFIG, ARCHETYPES, PRESETS, SHAPE_SLOT,
     makeProfile, makeObjectives, makeColorProfile, leaderParams,
-    estimateDamage, leaderMultiplier, evaluateObjectives, attributeAdvantage,
+    estimateDamage, leaderMultiplier, evaluateObjectives, attributeAdvantage, shapeLabel, SHAPE_NAME,
     scoreBoard, summarize
   };
 })();
@@ -3775,6 +3865,31 @@ const Store = (function () {
     return cell && cell.parentElement === boardEl ? +cell.dataset.i : -1;
   }
 
+  /**
+   * Painting is only allowed while the Edit tab is open. The board sits above
+   * the tabs and stays visible the whole time, so without this a tap meant for
+   * "look at the result" would quietly repaint an orb - especially after
+   * playback, when the board is the thing you are studying.
+   */
+  function editingAllowed() {
+    const panel = document.getElementById('tab-board');
+    return !!panel && panel.classList.contains('on');
+  }
+
+  let hintTimer = null;
+  function flashBoardHint(msg) {
+    const el = $('#boardHint');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('on');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => { el.classList.remove('on'); }, 2600);
+  }
+
+  function syncEditLock() {
+    boardEl.classList.toggle('locked', !editingAllowed() && !practiceOn());
+  }
+
   boardEl.addEventListener('pointerdown', e => {
     const cell = e.target.closest('.cell');
     if (!cell) return;
@@ -3782,6 +3897,10 @@ const Store = (function () {
     try { boardEl.setPointerCapture(e.pointerId); } catch (_) {}
     /* In practice mode the same gesture means "pick this orb up", not "paint". */
     if (practiceOn()) { practiceGrab(+cell.dataset.i); return; }
+    if (!editingAllowed()) {
+      flashBoardHint('Open the Edit tab to change the board.');
+      return;
+    }
     /* Editing the board retires whatever solution is on screen. */
     invalidateSolution();
     painting = true; lastIndex = -1; flagValue = null;
@@ -3843,6 +3962,7 @@ const Store = (function () {
     if (!b) return;
     document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('on', p.id === b.getAttribute('aria-controls')));
+    syncEditLock();
   });
 
   /* ====================================================================
@@ -3872,7 +3992,7 @@ const Store = (function () {
     'obj-minHearts': 'Match at least this many hearts in one connected group. This is what triggers bind and awoken-bind recovery, so set it on the turn you need to cleanse.',
     'obj-minCombos': 'Force a minimum combo count — for combo shields that block damage below a number of combos, or leaders that need a count to activate.',
     'obj-requiredColors': 'Every colour you tick must produce at least one match. Use it for leaders that need specific colours, like a two-colour lead.',
-    'obj-requireShape': 'Force a specific shape to be made this turn: a VDP square to pierce void, a full row, a cross, an L, or a 4-orb TPA.',
+    'obj-shapes': 'Force particular matches to happen. Add one row per requirement - for example a TPA in light AND a TPA in water - and the solver will only offer boards that make all of them, then maximise combos and damage on top. Each row can be Required (solutions missing it are thrown out) or Bonus (preferred, but tradeable).',
 
     engine: 'Beam explores many promising drags side by side and is the better all-rounder. Iterative deepening checks every short path before it looks at longer ones, so try it when you specifically want the fewest moves.',
     beamWidth: 'How many possible drags the solver keeps alive at once. This is the setting that most affects how many combos it finds. Lower is faster; higher searches wider. 10000 is a good balance for a 3 second search.',
@@ -4092,8 +4212,45 @@ const Store = (function () {
     { key: 'minHearts', label: 'Connected hearts', num: 'n', numLabel: 'at least', min: 3, max: 12 },
     { key: 'minCombos', label: 'Combo count', num: 'n', numLabel: 'at least', min: 2, max: 15 },
     { key: 'requiredColors', label: 'Match these colours', colors: true },
-    { key: 'requireShape', label: 'Make a shape', shape: true }
+    { key: 'shapes', label: 'Required matches', shapes: true }
   ];
+
+  const SHAPE_CHOICES = [
+    ['tpa', 'TPA (exactly 4)'], ['vdp', 'VDP (3x3 of 9)'], ['row', 'Full row'],
+    ['cross', 'Cross (plus of 5)'], ['l', 'L shape'], ['column', 'Full column']
+  ];
+
+  /** One "1x TPA of light, required" row. */
+  function shapeReqRow(req, i) {
+    const colorOpts = '<option value="0">any colour</option>' +
+      ATTRS.concat([Engine.ORB.HEART]).map(t =>
+        '<option value="' + t + '"' + (req.color === t ? ' selected' : '') + '>' + ORB_NAME[t] + '</option>').join('');
+    return '<div class="shape-req" data-i="' + i + '">' +
+      '<input class="num" type="number" min="1" max="6" step="1" value="' + (req.count || 1) +
+        '" data-k="count" aria-label="How many">' +
+      '<select class="sel" data-k="shape" aria-label="Shape">' +
+        SHAPE_CHOICES.map(c => '<option value="' + c[0] + '"' +
+          (req.shape === c[0] ? ' selected' : '') + '>' + c[1] + '</option>').join('') +
+      '</select>' +
+      '<select class="sel" data-k="color" aria-label="Colour">' + colorOpts + '</select>' +
+      '<select class="sel" data-k="hard" aria-label="Required or bonus">' +
+        '<option value="hard"' + (req.hard !== false ? ' selected' : '') + '>Required</option>' +
+        '<option value="soft"' + (req.hard === false ? ' selected' : '') + '>Bonus</option>' +
+      '</select>' +
+      '<button type="button" class="req-x" data-remove aria-label="Remove this requirement">&times;</button>' +
+      '</div>';
+  }
+
+  function renderShapeReqs() {
+    const o = state.profile.objectives.shapes;
+    o.list = o.list || [];
+    const host = $('#shapeReqs');
+    if (!host) return;
+    host.innerHTML = o.list.length
+      ? o.list.map(shapeReqRow).join('')
+      : '<p class="hint" style="margin:0 0 8px">No match requirements yet. Add one to force a specific shape, ' +
+        'for example a TPA in light and a TPA in water.</p>';
+  }
 
   function buildObjectivePanel() {
     $('#objectiveRows').innerHTML = OBJECTIVE_DEFS.map(def => {
@@ -4105,16 +4262,19 @@ const Store = (function () {
           '" min="' + def.min + '" max="' + def.max + '" step="1" value="' + o[def.num] + '">';
       }
       if (def.colors) extra += colorToggle(o.colors || [], 'obj-' + def.key);
-      if (def.shape) {
-        extra += '<select class="sel" data-obj="' + def.key + '" data-k="shape">' +
-          ['vdp', 'row', 'cross', 'l', 'tpa', 'column'].map(s =>
-            '<option value="' + s + '"' + (o.shape === s ? ' selected' : '') + '>' + s.toUpperCase() + '</option>').join('') +
-          '</select>' +
-          '<select class="sel" data-obj="' + def.key + '" data-k="color">' +
-          '<option value="0">any colour</option>' +
-          ATTRS.concat([Engine.ORB.HEART]).map(t =>
-            '<option value="' + t + '"' + (o.color === t ? ' selected' : '') + '>' + ORB_NAME[t] + '</option>').join('') +
-          '</select>';
+      /* The match list carries its own per-row Required/Bonus, so it does not
+         get the single selector the other objectives use. */
+      if (def.shapes) {
+        return '<div class="obj-row">' +
+          '<div class="field-row">' +
+            '<span class="label-with-info">' +
+            '<label class="chk"><input type="checkbox" data-obj="' + def.key + '" data-k="on"' +
+              (o.on ? ' checked' : '') + '> ' + def.label + '</label>' +
+            infoBtn('obj-' + def.key) + '</span>' +
+          '</div>' +
+          '<div id="shapeReqs"></div>' +
+          '<button type="button" class="btn" id="btnAddShape">+ Add match requirement</button>' +
+        '</div>';
       }
       return '<div class="obj-row">' +
         '<div class="field-row">' +
@@ -4130,6 +4290,7 @@ const Store = (function () {
         (extra ? '<div class="obj-extra">' + extra + '</div>' : '') +
       '</div>';
     }).join('');
+    renderShapeReqs();
   }
 
   function objectiveHandler(e) {
@@ -4159,7 +4320,50 @@ const Store = (function () {
   $('#objectiveRows').addEventListener('click', e => {
     if (e.target.closest('.color-toggle button')) objectiveHandler(e);
   });
-  function syncObjectivePanel() { buildObjectivePanel(); refreshHelpTitles($('#objectiveRows')); }
+  function syncObjectivePanel() {
+    buildObjectivePanel();
+    renderShapeReqs();
+    refreshHelpTitles($('#objectiveRows'));
+  }
+
+  /* ---------- match requirements (add / edit / remove) ------------------ */
+
+  $('#objectiveRows').addEventListener('click', e => {
+    const add = e.target.closest('#btnAddShape');
+    if (add) {
+      const o = state.profile.objectives.shapes;
+      o.list = o.list || [];
+      /* Default to a TPA: it is the requirement people reach for most. */
+      o.list.push({ shape: 'tpa', color: 0, count: 1, hard: true, weight: 30 });
+      o.on = true;
+      const box = $('input[data-obj="shapes"][data-k="on"]');
+      if (box) box.checked = true;
+      renderShapeReqs();
+      invalidateSolution();
+      return;
+    }
+    const del = e.target.closest('[data-remove]');
+    if (del) {
+      const i = +del.closest('.shape-req').dataset.i;
+      state.profile.objectives.shapes.list.splice(i, 1);
+      renderShapeReqs();
+      invalidateSolution();
+    }
+  });
+
+  $('#objectiveRows').addEventListener('change', e => {
+    const field = e.target.closest('.shape-req [data-k]');
+    if (!field) return;
+    const row = field.closest('.shape-req');
+    const req = state.profile.objectives.shapes.list[+row.dataset.i];
+    if (!req) return;
+    const k = field.dataset.k;
+    if (k === 'hard') req.hard = field.value === 'hard';
+    else if (k === 'color') req.color = +field.value;
+    else if (k === 'count') req.count = Math.max(1, +field.value || 1);
+    else req.shape = field.value;
+    invalidateSolution();
+  });
 
   /* ====================================================================
      SOLVE (A10) + RESULTS (A13)
@@ -4313,6 +4517,7 @@ const Store = (function () {
       r.combos + ' combos · score ' + r.score.toFixed(1);
     $('#pbSlider').max = r.steps.length;
     $('#pbNote').textContent = '';
+    setPathVisible(true);
     renderPathGuide(analysis);
     setStep(0);
     redrawPath();
@@ -4325,6 +4530,7 @@ const Store = (function () {
     const play = state.play;
     if (!play || !play.analysis) return;
     if (focus !== undefined) play.focus = focus;
+    if (play.pathHidden) { Render.clearPath(); return; }
     Render.drawPath(play.visited, { phases: play.analysis.phases, focus: play.focus });
   }
 
@@ -4544,7 +4750,7 @@ const Store = (function () {
       target: target,
       allowDiagonal: play.result.steps.some(d => d >= 4)
     };
-    Render.clearPath();
+    setPathVisible(false);
     Render.setFocus(false);
     Render.setCursor(-1);
     state.preview = Engine.cloneBoard(state.board);
@@ -4658,10 +4864,46 @@ const Store = (function () {
   });
   $('#prReveal').addEventListener('click', () => {
     if (!state.play) return;
+    setPathVisible(true);
     redrawPath(-1);
     setPracticeNote('Path shown. Compare it with your attempt, then press <b>Try again</b>.');
   });
   $('#prExit').addEventListener('click', () => exitPractice(false));
+
+  /**
+   * Put the board back to the moment before Play, without dropping the
+   * solution - the point is to study the starting board and the path together
+   * after watching it resolve.
+   */
+  function rewindPlayback() {
+    const play = state.play;
+    if (!play) return;
+    play.playing = false;
+    play.resolving = false;
+    clearTimeout(state.timer);
+    $('#pbPlay').innerHTML = '&#9654;';
+    Render.clearMarks();
+    Render.resetTransforms();
+    setStep(0);
+    redrawPath(play.focus);
+    $('#pbNote').textContent = 'Board reset to the start. The path is still selected.';
+  }
+
+  function setPathVisible(on) {
+    const play = state.play;
+    if (!play) return;
+    play.pathHidden = !on;
+    const btn = $('#pbPath');
+    btn.textContent = on ? 'Hide path' : 'Show path';
+    btn.setAttribute('aria-pressed', String(on));
+    if (on) redrawPath(play.focus); else Render.clearPath();
+  }
+
+  $('#pbRewind').addEventListener('click', rewindPlayback);
+  $('#pbPath').addEventListener('click', () => {
+    const play = state.play;
+    if (play) setPathVisible(!!play.pathHidden);
+  });
 
   $('#pbPlay').addEventListener('click', togglePlay);
   $('#pbSlider').addEventListener('input', e => {
@@ -4933,6 +5175,7 @@ const Store = (function () {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }));
 
+  syncEditLock();
   redrawAll();
   setStatus(restored
     ? 'Board and team restored from your last session. Press Solve when ready.'
@@ -5431,6 +5674,77 @@ const Tests = (function () {
       (heartScore.objectives[0] || {}).delta);
     ok('soft objective never sinks the score', S.scoreBoard(E.evaluateBoard(fx('RRRBGD' + filler)), softHearts).score > 0,
       'soft miss behaved like a hard failure');
+
+    /* ---- required matches: a list, judged one entry at a time ---- */
+    const tpaLight = fx('LLLLBG' + filler);        // one match of exactly 4 light
+    const tpaBoth = fx(`
+      LLLLBG
+      BBBBGD
+      GDGDGD
+      DGDGDG
+      GDGDGD`);
+    const noTpa = fx('LLLBGD' + filler);           // light matches, but only three
+
+    const reqProfile = list => {
+      const p = S.makeProfile();
+      for (const t of E.ATTRIBUTES) p.colors[t] = S.makeColorProfile(1);
+      p.objectives.shapes = { on: true, list: list };
+      return p;
+    };
+    const L = E.ORB.LIGHT, B = E.ORB.WATER;
+    const oneReq = [{ shape: 'tpa', color: L, count: 1, hard: true, weight: 30 }];
+    const twoReq = [{ shape: 'tpa', color: L, count: 1, hard: true, weight: 30 },
+                    { shape: 'tpa', color: B, count: 1, hard: true, weight: 30 }];
+
+    eq('fixture really makes a light TPA', E.colStat(E.evaluateBoard(tpaLight), L, E.CF.TPA), 1);
+    ok('required TPA passes when it is made',
+      !S.scoreBoard(E.evaluateBoard(tpaLight), reqProfile(oneReq)).hardFailed, 'wrongly failed');
+    ok('required TPA fails when it is not',
+      S.scoreBoard(E.evaluateBoard(noTpa), reqProfile(oneReq)).hardFailed, 'wrongly passed');
+    eq('requirement is labelled for the results list',
+      S.scoreBoard(E.evaluateBoard(tpaLight), reqProfile(oneReq)).objectives[0].label, '1\u00d7 TPA L');
+
+    /* Two requirements are judged separately, and both must be met. */
+    const both = S.scoreBoard(E.evaluateBoard(tpaBoth), reqProfile(twoReq));
+    eq('two requirements produce two entries', both.objectives.length, 2);
+    ok('a board making both passes', !both.hardFailed, 'wrongly failed');
+
+    /**
+     * The gradient the beam search depends on: meeting one of two requirements
+     * must score strictly better than meeting neither. If both simply collapsed
+     * to "failed" the search would have nothing to climb toward.
+     */
+    const halfway = S.scoreBoard(E.evaluateBoard(tpaLight), reqProfile(twoReq));
+    const nothing = S.scoreBoard(E.evaluateBoard(noTpa), reqProfile(twoReq));
+    ok('one of two beats none of two', halfway.score > nothing.score,
+      halfway.score + ' vs ' + nothing.score);
+    ok('both of two beats one of two', both.score > halfway.score,
+      both.score + ' vs ' + halfway.score);
+
+    /* Counts above one are respected. */
+    const needTwo = [{ shape: 'tpa', color: L, count: 2, hard: true, weight: 30 }];
+    ok('asking for 2 TPAs fails a board with 1',
+      S.scoreBoard(E.evaluateBoard(tpaLight), reqProfile(needTwo)).hardFailed, 'wrongly passed');
+    eq('the count shows in the label',
+      S.scoreBoard(E.evaluateBoard(tpaLight), reqProfile(needTwo)).objectives[0].label, '2\u00d7 TPA L');
+
+    /* A Bonus requirement steers without gating. */
+    const soft = [{ shape: 'tpa', color: L, count: 1, hard: false, weight: 30 }];
+    ok('bonus requirement never sinks the score',
+      !S.scoreBoard(E.evaluateBoard(noTpa), reqProfile(soft)).hardFailed, 'behaved like a hard fail');
+    ok('bonus requirement pays out when met',
+      S.scoreBoard(E.evaluateBoard(tpaLight), reqProfile(soft)).objectives[0].delta === 30, 'no bonus');
+
+    /* "any colour" accepts the shape wherever it lands. */
+    const anyColour = [{ shape: 'tpa', color: 0, count: 1, hard: true, weight: 30 }];
+    ok('any-colour requirement accepts a light TPA',
+      !S.scoreBoard(E.evaluateBoard(tpaLight), reqProfile(anyColour)).hardFailed, 'wrongly failed');
+
+    /* Turning the block off disables every row in it. */
+    const offProfile = reqProfile(twoReq);
+    offProfile.objectives.shapes.on = false;
+    eq('switching the block off drops its entries',
+      S.scoreBoard(E.evaluateBoard(noTpa), offProfile).objectives.length, 0);
 
     /* Every shipped preset must produce a finite score on a real board. */
     for (const p of S.PRESETS) {
