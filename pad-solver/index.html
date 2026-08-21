@@ -373,6 +373,22 @@ a.btn{text-decoration:none;justify-content:center}
   border-radius:50%;background:var(--accent);color:var(--accent-ink);
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;
 }
+/* ---------- saved profiles ---------- */
+.saved-profile{display:flex;gap:6px;align-items:stretch;margin:0 0 6px}
+.sp-load{
+  flex:1 1 auto;min-width:0;text-align:left;cursor:pointer;padding:9px 11px;
+  background:var(--panel-2);border:1.5px solid var(--line-soft);border-radius:11px;
+  display:flex;flex-direction:column;gap:2px;min-height:var(--tap);
+}
+.sp-load:hover{border-color:var(--accent)}
+.sp-name{font-size:13.5px;font-weight:650;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-meta{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-x{
+  flex:0 0 44px;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;
+  color:var(--muted);font-size:18px;line-height:1;cursor:pointer;min-height:var(--tap);
+}
+.sp-x[data-armed="1"]{border-color:#c9534f;color:#ff9b9b;font-size:12px;font-weight:700}
+.sp-empty{color:var(--muted);font-size:12.5px;margin:0 0 8px}
 .preset-desc{
   margin:8px 0 0;padding:9px 11px;background:#0e1420;border:1px solid var(--line-soft);
   border-radius:9px;color:var(--muted);font-size:12.5px;line-height:1.5;
@@ -616,6 +632,18 @@ details.about p{margin:8px 0}
       </div>
 
       <div class="card">
+        <h2>My profiles<button type="button" class="info" data-help="profiles" aria-expanded="false" aria-label="Explain this">?</button></h2>
+        <div class="row">
+          <input type="text" id="profileName" class="sel grow" maxlength="40" spellcheck="false"
+                 placeholder="Name this setup" aria-label="Profile name">
+          <button type="button" class="btn primary" id="btnSaveProfile">Save</button>
+        </div>
+        <div id="profileList"></div>
+        <p class="hint" id="profileHint">Saves your team, objectives and solver settings together.
+          The board is not included, so you can load a setup and then enter whatever board you are facing.</p>
+      </div>
+
+      <div class="card">
         <h2>Colour weights &amp; awakenings<button type="button" class="info" data-help="colorWeights" aria-expanded="false" aria-label="Explain this">?</button></h2>
         <div class="grid-head">
           <span>Colour</span><span>Weight</span><span>TPA</span><span>VDP</span><span>Row</span><span>L</span>
@@ -755,6 +783,12 @@ details.about p{margin:8px 0}
             <dl class="gdef" id="guidePresets"></dl>
             <p>A preset is just a shortcut that fills in the Team and Objectives tabs for you. After
               loading one you can change anything you like.</p>
+            <p><b>Saving your own:</b> once a preset is tweaked to match your team, type a name under
+              <b>My profiles</b> on the Team tab and press Save. That stores the Team tab, the
+              Objectives tab and your Solver settings together, and they stay put after you close the
+              page — tap the profile to load it back. The board is deliberately left out, so you load
+              your team and then enter whatever board you are actually facing. Saving under a name
+              that already exists updates it.</p>
           </div>
         </details>
 
@@ -947,7 +981,8 @@ details.about p{margin:8px 0}
       two degrade in that view and the app tells you when it happens. Our own string stays the
       source of truth.</p>
 
-    <p><b>Saved data:</b> the last board, your team profile and the solver settings are kept in this
+    <p><b>Saved data:</b> the last board, your team profile, the solver settings and any named
+      profiles you save are kept in this
       browser via <code>localStorage</code>, under the single key <code>pad-solver.v1</code>. Nothing
       leaves your device. <span id="storeNote"></span></p>
     <p><button type="button" class="btn" id="btnReset">Reset saved data</button></p>
@@ -3782,6 +3817,7 @@ const Store = (function () {
     preview: null,             // board shown during playback; null = the real board
     play: null,                // playback state
     practice: null,            // practice-mode drag state
+    savedProfiles: [],         // named team/objective/settings setups
     timer: null
   };
 
@@ -3978,6 +4014,7 @@ const Store = (function () {
     brush: 'Paint orb changes an orb\'s colour. Toggle + marks orbs as enhanced. Toggle lock marks orbs that orb-change skills cannot alter — locked orbs still move and match normally.',
     tools: 'Randomize fills the board with a fresh layout that has no matches already on it. Fill paints everything with the selected colour. Strip flags clears all + and lock marks.',
 
+    profiles: 'Save the current Team tab, Objectives tab and Solver settings together under a name, and load them back any time - including after closing the page. The board is deliberately not saved, so you can load a setup and then enter whatever board you are facing. Saving under a name that already exists overwrites it.',
     preset: 'A preset fills in the whole Team and Objectives tabs for one style of team, so you do not have to understand every setting. Load one, then change whatever you like. If you just want the most combos, use "Max combos".',
     colorWeights: 'Tell the solver what your team actually attacks with. Weight is roughly one per monster of that colour (+0.3 for a matching sub-colour). The other columns are how many of each awakening your team has in that colour — they make the matching shape worth chasing.',
     sevenCombo: 'How many Enhanced Combo ("7c") awakenings your team has. Each one doubles damage once the board makes 7 or more combos, so setting this pushes the solver hard toward 7.',
@@ -5029,16 +5066,29 @@ const Store = (function () {
     'setStepPen', 'setDiagPen', 'setPathWeight', 'setSkySamples'];
   const SETTING_FLAGS = ['setDiagonal', 'setNoSkyfall'];
 
-  function snapshot() {
+  /** Read the solver settings straight off their inputs. */
+  function captureSettings() {
     const s = {};
     SETTING_IDS.forEach(id => { s[id] = $('#' + id).value; });
     SETTING_FLAGS.forEach(id => { s[id] = $('#' + id).checked; });
+    return s;
+  }
+
+  /** Push saved solver settings back onto their inputs. */
+  function applySettings(s) {
+    if (!s) return;
+    SETTING_IDS.forEach(id => { if (s[id] != null) $('#' + id).value = s[id]; });
+    SETTING_FLAGS.forEach(id => { if (s[id] != null) $('#' + id).checked = !!s[id]; });
+  }
+
+  function snapshot() {
     return {
       v: 1,
       board: { w: state.board.w, h: state.board.h, text: Engine.encodeBoardFull(state.board) },
       profile: state.profile,
-      settings: s,
-      ui: { paintType: state.paintType, brush: state.brush }
+      settings: captureSettings(),
+      ui: { paintType: state.paintType, brush: state.brush },
+      profiles: state.savedProfiles
     };
   }
 
@@ -5088,14 +5138,10 @@ const Store = (function () {
         if (b.cells.length === saved.board.w * saved.board.h) state.board = b;
       }
       state.profile = mergeProfile(saved.profile);
-      if (saved.settings) {
-        SETTING_IDS.forEach(id => {
-          if (saved.settings[id] != null) $('#' + id).value = saved.settings[id];
-        });
-        SETTING_FLAGS.forEach(id => {
-          if (saved.settings[id] != null) $('#' + id).checked = !!saved.settings[id];
-        });
-      }
+      applySettings(saved.settings);
+      state.savedProfiles = Array.isArray(saved.profiles)
+        ? saved.profiles.filter(e => e && typeof e.name === 'string' && e.profile)
+        : [];
       if (saved.ui) {
         if (saved.ui.paintType != null) state.paintType = saved.ui.paintType;
         if (saved.ui.brush) state.brush = saved.ui.brush;
@@ -5124,6 +5170,142 @@ const Store = (function () {
     }
     Store.clear();
     location.reload();
+  });
+
+  /* ====================================================================
+     NAMED PROFILES
+     The autosave above remembers the last session; this remembers as many
+     named setups as you like. A profile deliberately carries the team,
+     objectives and solver settings but NOT the board - you load your team,
+     then enter whatever board you are actually facing.
+     ==================================================================== */
+
+  const MAX_PROFILES = 24;
+
+  /** A one-line summary so a saved profile is recognisable in the list. */
+  function describeProfile(entry) {
+    const p = entry.profile || {};
+    const bits = [];
+    const leaders = (p.leaders || [])
+      .map(l => (Score.ARCHETYPES[l && l.archetype] || {}).name)
+      .filter(n => n && n !== 'None');
+    if (leaders.length) bits.push(leaders.join(' + '));
+
+    const colours = Engine.ATTRIBUTES
+      .filter(t => p.colors && p.colors[t] && p.colors[t].weight > 0)
+      .map(t => Engine.ORB_CHAR[t]);
+    if (colours.length) bits.push(colours.join(''));
+
+    let objectives = 0;
+    const o = p.objectives || {};
+    for (const k of Object.keys(o)) {
+      if (k === 'shapes') objectives += (o[k].on && o[k].list) ? o[k].list.length : 0;
+      else if (o[k] && o[k].on) objectives++;
+    }
+    if (objectives) bits.push(objectives + (objectives === 1 ? ' objective' : ' objectives'));
+
+    const s = entry.settings || {};
+    if (s.setEngine === 'idb') bits.push('deepening');
+    if (s.setTime) bits.push((+s.setTime / 1000) + 's');
+    return bits.length ? bits.join(' \u00b7 ') : 'empty setup';
+  }
+
+  function renderProfileList() {
+    const host = $('#profileList');
+    if (!host) return;
+    if (!state.savedProfiles.length) {
+      host.innerHTML = '<p class="sp-empty">Nothing saved yet. Set up the Team and Objectives tabs, ' +
+        'give it a name above and press Save.</p>';
+      return;
+    }
+    host.innerHTML = state.savedProfiles.map((entry, i) =>
+      '<div class="saved-profile">' +
+        '<button type="button" class="sp-load" data-load="' + i + '">' +
+          '<span class="sp-name">' + esc(entry.name) + '</span>' +
+          '<span class="sp-meta">' + esc(describeProfile(entry)) + '</span>' +
+        '</button>' +
+        '<button type="button" class="sp-x" data-del="' + i + '" aria-label="Delete ' +
+          esc(entry.name) + '">&times;</button>' +
+      '</div>').join('');
+  }
+
+  function profileNote(msg) { $('#profileHint').textContent = msg; }
+
+  function saveNamedProfile(rawName) {
+    const name = String(rawName || '').trim();
+    if (!name) { profileNote('Give the setup a name first.'); return false; }
+    const entry = {
+      name: name,
+      savedAt: Date.now(),
+      /* Deep copy, or later edits to the live profile would rewrite history. */
+      profile: JSON.parse(JSON.stringify(state.profile)),
+      settings: captureSettings()
+    };
+    const at = state.savedProfiles.findIndex(e => e.name.toLowerCase() === name.toLowerCase());
+    if (at >= 0) {
+      state.savedProfiles[at] = entry;
+      profileNote('Updated "' + name + '".');
+    } else {
+      if (state.savedProfiles.length >= MAX_PROFILES) {
+        profileNote('That is ' + MAX_PROFILES + ' profiles already \u2014 delete one first.');
+        return false;
+      }
+      state.savedProfiles.push(entry);
+      profileNote('Saved "' + name + '". It will be here next time you open the page.');
+    }
+    renderProfileList();
+    persist();
+    return true;
+  }
+
+  function loadNamedProfile(i) {
+    const entry = state.savedProfiles[i];
+    if (!entry) return false;
+    /* Merge rather than assign, so a profile saved by an older build still
+       gets any fields added since. */
+    state.profile = mergeProfile(JSON.parse(JSON.stringify(entry.profile)));
+    applySettings(entry.settings);
+    syncTeamPanel();
+    syncObjectivePanel();
+    invalidateSolution();
+    profileNote('Loaded "' + entry.name + '". Enter your board, then press Solve.');
+    $('#profileName').value = entry.name;
+    $('#presetHint').textContent = 'Using your saved profile "' + entry.name + '".';
+    return true;
+  }
+
+  function deleteNamedProfile(i) {
+    const entry = state.savedProfiles[i];
+    if (!entry) return false;
+    state.savedProfiles.splice(i, 1);
+    renderProfileList();
+    persist();
+    profileNote('Deleted "' + entry.name + '".');
+    return true;
+  }
+
+  $('#btnSaveProfile').addEventListener('click', () => saveNamedProfile($('#profileName').value));
+  $('#profileName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveNamedProfile(e.target.value);
+  });
+
+  $('#profileList').addEventListener('click', e => {
+    const load = e.target.closest('[data-load]');
+    if (load) { loadNamedProfile(+load.dataset.load); return; }
+    /* Deleting is two-step: the x arms itself first, so a mis-tap on a phone
+       cannot silently destroy a setup. */
+    const del = e.target.closest('[data-del]');
+    if (!del) return;
+    if (del.dataset.armed === '1') { deleteNamedProfile(+del.dataset.del); return; }
+    document.querySelectorAll('.sp-x[data-armed="1"]').forEach(b => {
+      b.dataset.armed = '0';
+      b.innerHTML = '&times;';
+    });
+    del.dataset.armed = '1';
+    del.textContent = 'Sure?';
+    setTimeout(() => {
+      if (del.dataset.armed === '1') { del.dataset.armed = '0'; del.innerHTML = '&times;'; }
+    }, 3500);
   });
 
   /* ---------- boot ------------------------------------------------------ */
@@ -5175,6 +5357,7 @@ const Store = (function () {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }));
 
+  renderProfileList();
   syncEditLock();
   redrawAll();
   setStatus(restored
@@ -5191,7 +5374,9 @@ const Store = (function () {
     Engine, Render, Score, Solver, state,
     redrawAll, solve, selectResult, setStep, playResolution,
     /* exposed for the self-tests and for console poking */
-    snapshot, mergeProfile, persist, syncBoardString
+    snapshot, mergeProfile, persist, syncBoardString,
+    saveNamedProfile, loadNamedProfile, deleteNamedProfile, describeProfile,
+    captureSettings, applySettings, renderProfileList
   };
 })();
 </script>
@@ -6082,6 +6267,107 @@ const Tests = (function () {
     eq('snapshot carries the board size', clone.board.w * clone.board.h, snap.board.text.split('/')[0].length);
     ok('snapshot carries settings', clone.settings && clone.settings.setBeam != null, 'no settings');
     ok('snapshot is versioned', clone.v === 1, 'no version');
+  });
+
+  /* ================= named profiles =================================== */
+  suite('Named profiles: save, load, delete', function () {
+    const P = window.PAD;
+    const st = P.state;
+    /* This suite drives the live app, so put everything back afterwards. */
+    const keepProfile = JSON.parse(JSON.stringify(st.profile));
+    const keepList = JSON.parse(JSON.stringify(st.savedProfiles));
+    const keepSettings = P.captureSettings();
+    try {
+      st.savedProfiles = [];
+
+      /* Build a setup that touches every part a profile is meant to carry. */
+      st.profile = Score.PRESETS.find(p => /VDP/.test(p.name)).build();
+      st.profile.sevenCombo = 3;
+      st.profile.colors[E.ORB.WATER].tpa = 2;
+      st.profile.objectives.clearPoison.on = true;
+      st.profile.objectives.shapes = { on: true, list: [
+        { shape: 'tpa', color: E.ORB.LIGHT, count: 2, hard: true, weight: 30 },
+        { shape: 'row', color: E.ORB.WATER, count: 1, hard: false, weight: 30 }] };
+      P.applySettings({ setTime: '7000', setEngine: 'idb', setDiagonal: true, setNoSkyfall: false });
+
+      ok('saving needs a name', P.saveNamedProfile('   ') === false, 'saved an unnamed profile');
+      ok('saved with a name', P.saveNamedProfile('Test setup'), 'save failed');
+      eq('one profile stored', st.savedProfiles.length, 1);
+
+      /* The saved copy must not be a live reference to the working profile. */
+      st.profile.sevenCombo = 99;
+      eq('saved profile is a deep copy', st.savedProfiles[0].profile.sevenCombo, 3);
+
+      /* Wreck the live state, then load it back. */
+      st.profile = Score.PRESETS[0].build();
+      P.applySettings({ setTime: '1000', setEngine: 'beam', setDiagonal: false, setNoSkyfall: true });
+      ok('loaded the profile', P.loadNamedProfile(0), 'load failed');
+
+      const p = st.profile;
+      eq('team weight restored', p.colors[E.ORB.DARK].weight, 3);
+      eq('awakening count restored', p.colors[E.ORB.DARK].vdp, 2);
+      eq('edited awakening restored', p.colors[E.ORB.WATER].tpa, 2);
+      eq('global 7c restored', p.sevenCombo, 3);
+      eq('leader restored', p.leaders[0].archetype, 'connected');
+      ok('enemy flag restored', p.enemy.damageVoid, 'damage void lost');
+      ok('objective restored', p.objectives.clearPoison.on, 'clearPoison lost');
+      eq('match requirements restored', p.objectives.shapes.list.length, 2);
+      eq('requirement count restored', p.objectives.shapes.list[0].count, 2);
+      eq('requirement colour restored', p.objectives.shapes.list[0].color, E.ORB.LIGHT);
+      ok('requirement hard flag restored', p.objectives.shapes.list[0].hard === true, 'hard lost');
+      ok('bonus requirement stays a bonus', p.objectives.shapes.list[1].hard === false, 'soft lost');
+
+      const s = P.captureSettings();
+      eq('solver time budget restored', s.setTime, '7000');
+      eq('solver engine restored', s.setEngine, 'idb');
+      eq('diagonal toggle restored', s.setDiagonal, true);
+      eq('skyfall toggle restored', s.setNoSkyfall, false);
+
+      /* A loaded profile has to actually score a board. */
+      const feat = E.evaluateBoard(fx(`
+        RRRBBB
+        GGGLLL
+        DDDHHH
+        BGDBGD
+        GDBGDB`));
+      ok('loaded profile scores a board', Number.isFinite(Score.scoreBoard(feat, p).score), 'not finite');
+
+      /* Saving under an existing name updates in place, ignoring case. */
+      st.profile.sevenCombo = 5;
+      P.saveNamedProfile('test SETUP');
+      eq('same name overwrites rather than duplicating', st.savedProfiles.length, 1);
+      eq('overwrite kept the new values', st.savedProfiles[0].profile.sevenCombo, 5);
+
+      P.saveNamedProfile('Second');
+      eq('a new name adds a profile', st.savedProfiles.length, 2);
+      ok('summary line is not empty', P.describeProfile(st.savedProfiles[0]).length > 0, 'empty summary');
+
+      ok('deleted a profile', P.deleteNamedProfile(1), 'delete failed');
+      eq('deletion removed exactly one', st.savedProfiles.length, 1);
+      ok('deleting a missing index is safe', P.deleteNamedProfile(42) === false, 'claimed success');
+      ok('loading a missing index is safe', P.loadNamedProfile(42) === false, 'claimed success');
+
+      /* Profiles ride along in the autosave, and survive JSON. */
+      const snap = JSON.parse(JSON.stringify(P.snapshot()));
+      eq('snapshot carries the profiles', snap.profiles.length, 1);
+      eq('profile name survives JSON', snap.profiles[0].name, 'test SETUP');
+      eq('profile settings survive JSON', snap.profiles[0].settings.setTime, '7000');
+      ok('profiles do not carry a board', snap.profiles[0].board === undefined, 'board was stored');
+
+      /* A profile written by an older build still loads. */
+      st.savedProfiles = [{ name: 'Old', savedAt: 1, profile: { sevenCombo: 1 }, settings: {} }];
+      ok('an old sparse profile still loads', P.loadNamedProfile(0), 'load failed');
+      ok('missing colours come back as defaults',
+        E.ATTRIBUTES.every(t => st.profile.colors[t] && typeof st.profile.colors[t].weight === 'number'),
+        'colour missing');
+      ok('missing objectives come back as defaults',
+        !!st.profile.objectives.shapes, 'objectives missing');
+    } finally {
+      st.profile = P.mergeProfile(keepProfile);
+      st.savedProfiles = keepList;
+      P.applySettings(keepSettings);
+      P.renderProfileList();
+    }
   });
 
   /* ---------- runner + report ----------------------------------------- */
