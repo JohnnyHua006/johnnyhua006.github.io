@@ -308,10 +308,11 @@ body::before{
 #reasons{text-align:center}
 .reasons-head{margin-bottom:.9rem;font-size:clamp(1.9rem,7.5vw,2.9rem)}
 .reasons-note{font-family:var(--serif);font-style:italic;color:var(--rose);font-size:1rem;margin-bottom:2.8rem}
-.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem}
+.cards{display:flex;flex-wrap:wrap;justify-content:center;gap:.7rem}
 .card{
   background:none;border:0;padding:0;cursor:pointer;
   perspective:1100px;min-height:206px;font:inherit;
+  flex:0 1 calc(50% - .35rem);
 }
 .card:focus-visible{outline:1px solid var(--gold);outline-offset:6px}
 .card-inner{
@@ -327,12 +328,32 @@ body::before{
 .face-front{
   background:var(--paper);border:1px solid var(--gold-faint);
   box-shadow:0 10px 26px -18px rgba(58,31,22,.4);
+  transition:box-shadow .4s ease;
 }
-.face-front .no{font-family:var(--serif);font-size:1.5rem;color:var(--gold);opacity:.65;line-height:1}
+
+/* a quiet little frame, and a diamond that turns when you reach for it */
+.face-front::before{
+  content:'';position:absolute;top:6px;left:6px;right:6px;bottom:6px;
+  border:1px solid var(--gold-faint);border-radius:1px;pointer-events:none;
+  transition:border-color .4s ease;
+}
+.face-front::after{
+  content:'';position:absolute;left:50%;top:6px;width:7px;height:7px;
+  background:var(--paper);border:1px solid var(--gold-soft);
+  transform:translate(-50%,-50%) rotate(45deg);
+  transition:background .4s ease,border-color .4s ease,transform .5s cubic-bezier(.3,.9,.3,1);
+}
+.card{transition:transform .35s cubic-bezier(.2,.8,.3,1)}
+.card:hover{transform:translateY(-4px)}
+.card:hover .face-front{box-shadow:0 16px 32px -18px rgba(58,31,22,.5)}
+.card:hover .face-front::before{border-color:var(--gold-soft)}
+.card:hover .face-front::after{
+  background:var(--blush);border-color:var(--gold);
+  transform:translate(-50%,-50%) rotate(135deg) scale(1.15);
+}
 .face-front .ttl{
   font-family:var(--serif);font-style:italic;font-size:1.12rem;color:var(--wine);margin:.5rem 0 .7rem;line-height:1.2;
 }
-.face-front .hint{font-size:.5rem;letter-spacing:.32em;text-transform:uppercase;color:var(--rose);opacity:.6}
 .face-back{
   transform:rotateY(180deg);
   background:linear-gradient(165deg,#F6E7DD,#EFD9CB);
@@ -402,13 +423,14 @@ footer .mono{font-family:var(--serif);font-style:italic;font-size:1.15rem;letter
 
 /* ══════════ CARD TIERS ══════════ */
 @media(min-width:560px){
-  .cards{grid-template-columns:repeat(3,1fr);gap:.85rem}
+  .cards{gap:.85rem}
+  .card{flex-basis:calc(33.333% - .57rem)}
   .face{padding:1.3rem 1.1rem}
   .face-front .ttl{font-size:1.3rem;margin:.55rem 0 .75rem}
   .face-back p{font-size:1rem;line-height:1.6}
 }
 @media(min-width:900px){
-  .cards{grid-template-columns:repeat(5,1fr)}
+  .card{flex-basis:calc(25% - .64rem)}
 }
 
 /* ══════════ DESKTOP ══════════ */
@@ -541,7 +563,7 @@ footer .mono{font-family:var(--serif);font-style:italic;font-size:1.15rem;letter
 
   <!-- ═══════════ REASONS ═══════════ -->
   <section class="section" id="reasons">
-    <h2 class="display reasons-head reveal">Fifteen reasons out of ten thousand.</h2>
+    <h2 class="display reasons-head reveal">A few reasons out of ten thousand.</h2>
     <p class="reasons-note reveal">Tap every single one of them.</p>
     <div class="cards" id="cards"></div>
   </section>
@@ -593,18 +615,15 @@ footer .mono{font-family:var(--serif);font-style:italic;font-size:1.15rem;letter
    ═══════════════════════════════════════════════════════════ */
 const REASONS = [
   { t:'Your yes',        r:'You said yes in Pasadena, and then you said yes again in Italy. I still do not know what I did to deserve either one.' },
-  { t:'Slow mornings',   r:'Nothing special. Coffee, you and me, Chewie and Gucci on the couch. My favorite hours of the whole week.' },
-  { t:'Your laugh',      r:'You start laughing before you even get to the end of the joke. I love that sound more than anything.' },
-  { t:'How you love',    r:'You love people with your whole attention. Whoever you are with feels like the most important person in the room.' },
+  { t:'Slow mornings',   r:'Nothing planned, just you and me, Chewie and Gucci cuddling in bed for a little longer. My favorite hours of the whole week.' },
+  { t:'Your laugh',      r:'Your laugh fills the whole room, and it fills my heart right along with it. My favorite sound in the world.' },
+  { t:'How you love',    r:'You love others with your whole attention. Whoever you are with, two legs or four, feels like the most important one in the room.' },
   { t:'Your hands',      r:'The ones I held at the courthouse. The ones I will still be holding when we are old and slow and still deciding where to eat.' },
-  { t:'Your strength',   r:'You carry heavy things quietly. Then you turn around and ask me how my day was.' },
-  { t:'Our babies',      r:'Chewie and Gucci think you hung the moon. They are right. They are also not the only ones who think so.' },
-  { t:'Your kindness',   r:'The small kind that nobody else sees. All the little things you do without ever being asked.' },
+  { t:'Our babies',      r:'Chewie and Gucci think you are the greatest thing that has ever happened to them. They are right, and they are not the only ones who think so.' },
   { t:'Your mind',       r:'You notice everything and you remember everything. You make me better just by paying attention.' },
   { t:'Italy',           r:'A whole ocean away from home, and the best part of the entire trip was just getting to marry you again.' },
-  { t:'Your patience',   r:'Mostly with me. Thank you for that one. Genuinely, thank you.' },
+  { t:'Your patience',   r:'Mostly with me. Thank you for that one, genuinely. I will keep growing into the husband you deserve.' },
   { t:'Home',            r:'It was never a place. It is whatever room you happen to be standing in.' },
-  { t:'Your courage',    r:'You picked a courthouse and a quiet Monday over anything anyone expected. You always know exactly what is ours.' },
   { t:'The future',      r:'Everything I am excited about has you in it. All of it. No exceptions.' },
   { t:'Simply you',      r:'If I had to choose all over again tomorrow, and every day after that, I would choose you every single time.' }
 ];
@@ -618,14 +637,12 @@ const ITALY   = new Date(2026, 3, 14, 12, 0, 0);    // April 14, 2026 · Villa d
   REASONS.forEach(function(item, i){
     const btn = document.createElement('button');
     btn.className = 'card reveal';
-    btn.setAttribute('aria-label', 'Reason ' + (i + 1) + ': ' + item.t + '. Tap to read.');
+    btn.setAttribute('aria-label', item.t + '. Tap to read.');
     btn.style.transitionDelay = (i % 4) * 90 + 'ms';
     btn.innerHTML =
       '<span class="card-inner">' +
         '<span class="face face-front">' +
-          '<span class="no">' + String(i + 1).padStart(2, '0') + '</span>' +
           '<span class="ttl">' + item.t + '</span>' +
-          '<span class="hint">Turn over</span>' +
         '</span>' +
         '<span class="face face-back"><p>' + item.r + '</p></span>' +
       '</span>';
